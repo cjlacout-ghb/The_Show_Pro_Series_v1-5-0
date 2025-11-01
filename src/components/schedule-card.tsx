@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Game, Team } from "@/lib/types";
@@ -7,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Select,
@@ -24,6 +26,7 @@ type ScheduleCardProps = {
   teams: Team[];
   onGameChange: (gameId: number, field: keyof Game, value: string) => void;
   gameCount: number;
+  footer?: React.ReactNode;
 };
 
 export default function ScheduleCard({
@@ -31,6 +34,7 @@ export default function ScheduleCard({
   games,
   teams,
   onGameChange,
+  footer,
 }: ScheduleCardProps) {
   return (
     <Card>
@@ -94,6 +98,7 @@ export default function ScheduleCard({
           </div>
         ))}
       </CardContent>
+      {footer && <CardFooter>{footer}</CardFooter>}
     </Card>
   );
 }

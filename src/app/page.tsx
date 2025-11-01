@@ -1,11 +1,14 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { Team, Game, Standing } from "@/lib/types";
 import { SoftballIcon } from "@/components/icons";
 import TeamSetup from "@/components/team-setup";
 import ScheduleCard from "@/components/schedule-card";
 import StandingsTable from "@/components/standings-table";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const initialTeams: Team[] = [
   { id: 1, name: "ACCIN VORTEX (ARG)" },
@@ -32,28 +35,23 @@ const initialChampionshipGame: Game = {
   score2: "",
 };
 
-const initialStandings: Standing[] = initialTeams.map((team, index) => ({
-  teamId: team.id,
-  pos: (index + 1).toString(),
-  w: "0",
-  l: "0",
-  rs: "0",
-  ra: "0",
-  pct: ".000",
-  gb: "-",
-}));
-
 export default function Home() {
   const [teams, setTeams] = useState<Team[]>(initialTeams);
   const [preliminaryGames, setPreliminaryGames] = useState<Game[]>(initialGames);
   const [championshipGame, setChampionshipGame] = useState<Game>(initialChampionshipGame);
-  const [standings, setStandings] = useState<Standing[]>(initialStandings);
-
-  const handleTeamNameChange = (id: number, newName: string) => {
-    setTeams((prevTeams) =>
-      prevTeams.map((team) => (team.id === id ? { ...team, name: newName } : team))
-    );
-  };
+  const [standings, setStandings] = useState<Standing[]>(() =>
+    initialTeams.map((team) => ({
+      teamId: team.id,
+      pos: 0,
+      w: 0,
+      l: 0,
+      rs: 0,
+      ra: 0,
+      pct: 0,
+      gb: 0,
+    }))
+  );
+  const { toast } = useToast();
 
   const handleGameChange = (
     gameId: number,
@@ -72,13 +70,70 @@ export default function Home() {
     });
   };
 
-  const handleStandingChange = (teamId: number, field: keyof Omit<Standing, 'teamId'>, value: string) => {
-    setStandings(prevStandings =>
-      prevStandings.map(standing =>
-        standing.teamId === teamId ? { ...standing, [field]: value } : standing
-      )
-    );
-  };
+  const calculateStandings = useCallback(() => {
+    const newStandings: Omit<Standing, "pos" | "gb">[] = teams.map(team => ({
+      teamId: team.id,
+      w: 0,
+      l: 0,
+      rs: 0,
+      ra: 0,
+      pct: 0,
+    }));
+
+    preliminaryGames.forEach(game => {
+      if (game.team1Id && game.team2Id && game.score1 !== "" && game.score2 !== "") {
+        const team1Id = parseInt(game.team1Id);
+        const team2Id = parseInt(game.team2Id);
+        const score1 = parseInt(game.score1);
+        const score2 = parseInt(game.score2);
+
+        const standing1 = newStandings.find(s => s.teamId === team1Id);
+        const standing2 = newStandings.find(s => s.teamId === team2Id);
+
+        if (standing1 && standing2) {
+          standing1.rs += score1;
+          standing1.ra += score2;
+          standing2.rs += score2;
+          standing2.ra += score1;
+
+          if (score1 > score2) {
+            standing1.w++;
+            standing2.l++;
+          } else if (score2 > score1) {
+            standing2.w++;
+            standing1.l++;
+          }
+        }
+      }
+    });
+
+    newStandings.forEach(standing => {
+      const gamesPlayed = standing.w + standing.l;
+      standing.pct = gamesPlayed > 0 ? Math.round((standing.w / gamesPlayed) * 1000) : 0;
+    });
+
+    newStandings.sort((a, b) => b.w - a.w || a.l - b.l || (b.rs - b.ra) - (a.rs - a.ra));
+
+    const firstPlaceWins = newStandings.length > 0 ? newStandings[0].w : 0;
+    const firstPlaceLosses = newStandings.length > 0 ? newStandings[0].l : 0;
+
+    const finalStandings: Standing[] = newStandings.map((standing, index) => {
+      const gamesBehind = ((firstPlaceWins - standing.w) + (standing.l - firstPlaceLosses)) / 2;
+      return {
+        ...standing,
+        pos: index + 1,
+        gb: index === 0 ? 0 : gamesBehind,
+      };
+    });
+
+    setStandings(finalStandings);
+    toast({
+      title: "Posiciones Actualizadas",
+      description: "Las posiciones se han recalculado con los últimos resultados.",
+    });
+
+  }, [preliminaryGames, teams, toast]);
+
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -97,23 +152,27 @@ export default function Home() {
 
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           <div className="xl:col-span-2 space-y-8">
-            <TeamSetup teams={teams} onTeamNameChange={handleTeamNameChange} />
+            <TeamSetup teams={teams} />
             <StandingsTable
               teams={teams}
               standings={standings}
-              onStandingChange={handleStandingChange}
             />
           </div>
           <div className="xl:col-span-3 space-y-8">
             <ScheduleCard
-              title="Preliminary Round"
+              title="Ronda Inicial"
               games={preliminaryGames}
               teams={teams}
               onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, false)}
               gameCount={15}
+              footer={
+                <div className="flex justify-end pt-4">
+                  <Button onClick={calculateStandings}>Guardar Resultados y Actualizar Posiciones</Button>
+                </div>
+              }
             />
             <ScheduleCard
-              title="Championship Game"
+              title="Partido Final"
               games={[championshipGame]}
               teams={teams}
               onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, true)}

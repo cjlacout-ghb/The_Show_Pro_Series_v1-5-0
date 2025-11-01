@@ -1,3 +1,4 @@
+
 export type Team = {
   id: number;
   name: string;
@@ -13,11 +14,11 @@ export type Game = {
 
 export type Standing = {
   teamId: number;
-  pos: string;
-  w: string;
-  l: string;
-  rs: string;
-  ra: string;
-  pct: string;
-  gb: string;
+  pos: number;
+  w: number;
+  l: number;
+  rs: number;
+  ra: number;
+  pct: number;
+  gb: number;
 };

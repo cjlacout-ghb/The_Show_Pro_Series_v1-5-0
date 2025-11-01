@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Standing, Team } from "@/lib/types";
@@ -16,32 +17,33 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 
 type StandingsTableProps = {
   standings: Standing[];
   teams: Team[];
-  onStandingChange: (teamId: number, field: keyof Omit<Standing, 'teamId'>, value: string) => void;
 };
 
 export default function StandingsTable({
   standings,
   teams,
-  onStandingChange,
 }: StandingsTableProps) {
   const tableColumns = ["POS", "TEAM", "W", "L", "RS", "RA", "PCT", "GB"];
-  const editableFields: (keyof Omit<Standing, 'teamId'>)[] = ['pos', 'w', 'l', 'rs', 'ra', 'pct', 'gb'];
 
   const getTeamName = (teamId: number) => {
     return teams.find((t) => t.id === teamId)?.name || "Unknown Team";
   };
+  
+  const formatPct = (pct: number) => {
+    if (pct === 1000) return "1.000";
+    return `.${pct.toString().padStart(3, '0')}`;
+  }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Standings</CardTitle>
+        <CardTitle>Posiciones</CardTitle>
         <CardDescription>
-          Manually update the team standings below.
+          Las posiciones se actualizan automáticamente con los resultados de la ronda inicial.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,29 +61,16 @@ export default function StandingsTable({
             <TableBody>
               {standings.map((standing) => (
                 <TableRow key={standing.teamId}>
-                  {editableFields.map((field) => (
-                     field === 'pos' ? (
-                      <TableCell key={field}>
-                        <Input
-                          value={standing[field]}
-                          onChange={(e) => onStandingChange(standing.teamId, field, e.target.value)}
-                          className="w-12"
-                        />
-                      </TableCell>
-                     ) : null
-                  ))}
+                  <TableCell>{standing.pos}</TableCell>
                   <TableCell className="font-medium">
                     {getTeamName(standing.teamId)}
                   </TableCell>
-                  {editableFields.filter(f => f !== 'pos').map(field => (
-                    <TableCell key={field}>
-                      <Input
-                        value={standing[field]}
-                        onChange={(e) => onStandingChange(standing.teamId, field, e.target.value)}
-                        className="w-16"
-                      />
-                    </TableCell>
-                  ))}
+                  <TableCell>{standing.w}</TableCell>
+                  <TableCell>{standing.l}</TableCell>
+                  <TableCell>{standing.rs}</TableCell>
+                  <TableCell>{standing.ra}</TableCell>
+                  <TableCell>{formatPct(standing.pct)}</TableCell>
+                  <TableCell>{standing.gb === 0 ? "-" : standing.gb.toFixed(1)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
