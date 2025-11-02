@@ -30,7 +30,7 @@ export default function ScheduleCard({
   footer,
 }: ScheduleCardProps) {
   const getTeamName = (teamId: string) => {
-    return teams.find((t) => String(t.id) === teamId)?.name || "Seleccionar Equipo";
+    return teams.find((t) => String(t.id) === teamId)?.name || "";
   };
   
   let lastDay: string | undefined = undefined;
@@ -65,7 +65,7 @@ export default function ScheduleCard({
                   </div>
                   <Input
                     type="number"
-                    placeholder="Marcador"
+                    placeholder=""
                     value={game.score1}
                     onChange={(e) =>
                       onGameChange(game.id, "score1", e.target.value)
@@ -79,7 +79,7 @@ export default function ScheduleCard({
                   </div>
                   <Input
                     type="number"
-                    placeholder="Marcador"
+                    placeholder=""
                     value={game.score2}
                     onChange={(e) =>
                       onGameChange(game.id, "score2", e.target.value)
