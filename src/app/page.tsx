@@ -3,12 +3,13 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { Team, Game, Standing } from "@/lib/types";
-import { SoftballIcon } from "@/components/icons";
+import { SoftballIcon, TrophyIcon } from "@/components/icons";
 import TeamSetup from "@/components/team-setup";
 import ScheduleCard from "@/components/schedule-card";
 import StandingsTable from "@/components/standings-table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const initialTeams: Team[] = [
   { id: 1, name: "ACCIN VORTEX (ARG)" },
@@ -20,52 +21,45 @@ const initialTeams: Team[] = [
 ];
 
 const initialGames: Game[] = [
-  // DÍA 1: Miércoles, 18 de marzo
-  { id: 1, team1Id: "2", score1: "", team2Id: "4", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "10:15" },
-  { id: 2, team1Id: "1", score1: "", team2Id: "6", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "13:15" },
-  { id: 3, team1Id: "3", score1: "", team2Id: "5", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "16:15" },
-  { id: 4, team1Id: "1", score1: "", team2Id: "5", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "21:00" },
-  // DÍA 2: Jueves, 19 de marzo
-  { id: 5, team1Id: "3", score1: "", team2Id: "6", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "10:15" },
-  { id: 6, team1Id: "2", score1: "", team2Id: "5", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "13:15" },
-  { id: 7, team1Id: "4", score1: "", team2Id: "1", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "16:15" },
-  { id: 8, team1Id: "3", score1: "", team2Id: "2", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "21:00" },
-  // DÍA 3: Viernes, 20 de marzo
-  { id: 9, team1Id: "5", score1: "", team2Id: "6", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "10:15" },
-  { id: 10, team1Id: "4", score1: "", team2Id: "3", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "13:15" },
-  { id: 11, team1Id: "2", score1: "", team2Id: "1", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "16:15" },
-  { id: 12, team1Id: "6", score1: "", team2Id: "4", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "21:00" },
-  // DÍA 4: Sábado, 21 de marzo
-  { id: 13, team1Id: "1", score1: "", team2Id: "3", score2: "", day: "DÍA 4: Sábado, 21 de marzo", time: "12:00" },
-  { id: 14, team1Id: "6", score1: "", team2Id: "2", score2: "", day: "DÍA 4: Sábado, 21 de marzo", time: "15:00" },
-  { id: 15, team1Id: "5", score1: "", team2Id: "4", score2: "", day: "DÍA 4: Sábado, 21 de marzo", time: "18:00" },
+    // DÍA 1: Miércoles, 18 de marzo
+    { id: 1, team1Id: "2", score1: "", team2Id: "4", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "10:15" },
+    { id: 2, team1Id: "1", score1: "", team2Id: "6", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "13:15" },
+    { id: 3, team1Id: "3", score1: "", team2Id: "5", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "16:15" },
+    { id: 4, team1Id: "1", score1: "", team2Id: "5", score2: "", day: "DÍA 1: Miércoles, 18 de marzo", time: "21:00" },
+    // DÍA 2: Jueves, 19 de marzo
+    { id: 5, team1Id: "3", score1: "", team2Id: "6", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "10:15" },
+    { id: 6, team1Id: "2", score1: "", team2Id: "5", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "13:15" },
+    { id: 7, team1Id: "4", score1: "", team2Id: "1", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "16:15" },
+    { id: 8, team1Id: "3", score1: "", team2Id: "2", score2: "", day: "DÍA 2: Jueves, 19 de marzo", time: "21:00" },
+    // DÍA 3: Viernes, 20 de marzo
+    { id: 9, team1Id: "5", score1: "", team2Id: "6", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "10:15" },
+    { id: 10, team1Id: "4", score1: "", team2Id: "3", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "13:15" },
+    { id: 11, team1Id: "2", score1: "", team2Id: "1", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "16:15" },
+    { id: 12, team1Id: "6", score1: "", team2Id: "4", score2: "", day: "DÍA 3: Viernes, 20 de marzo", time: "21:00" },
+    // DÍA 4: Sábado, 21 de marzo
+    { id: 13, team1Id: "1", score1: "", team2Id: "3", score2: "", day: "DÍA 4: Sábado, 21 de marzo", time: "12:00" },
+    { id: 14, team1Id: "6", score1: "", team2Id: "2", score2: "", day: "DÍA 4: Sábado, 21 de marzo", time: "15:00" },
+    { id: 15, team1Id: "5", score1: "", team2Id: "4", score2: "", day: "DÍA 4: Sábado, 21 de marzo", time: "18:00" },
 ];
 
 
 const initialChampionshipGame: Game = {
-  id: 1,
+  id: 16,
   team1Id: "",
   score1: "",
   team2Id: "",
   score2: "",
+  day: "DÍA 4: Sábado, 21 de marzo",
+  time: "21:00",
 };
 
 export default function Home() {
   const [teams, setTeams] = useState<Team[]>(initialTeams);
   const [preliminaryGames, setPreliminaryGames] = useState<Game[]>(initialGames);
   const [championshipGame, setChampionshipGame] = useState<Game>(initialChampionshipGame);
-  const [standings, setStandings] = useState<Standing[]>(() =>
-    initialTeams.map((team) => ({
-      teamId: team.id,
-      pos: 0,
-      w: 0,
-      l: 0,
-      rs: 0,
-      ra: 0,
-      pct: 0,
-      gb: 0,
-    }))
-  );
+  const [champion, setChampion] = useState<string | null>(null);
+  const [standings, setStandings] = useState<Standing[]>([]);
+
   const { toast } = useToast();
 
   const handleGameChange = (
@@ -148,7 +142,58 @@ export default function Home() {
     });
 
   }, [preliminaryGames, teams, toast]);
+  
+  useEffect(() => {
+    // Initial calculation on mount
+    calculateStandings();
+  }, [calculateStandings]);
 
+  useEffect(() => {
+    if (standings.length > 1) {
+      setChampionshipGame(prev => ({
+        ...prev,
+        team1Id: String(standings[0].teamId),
+        team2Id: String(standings[1].teamId)
+      }));
+    }
+  }, [standings]);
+  
+  const handleSaveChampionship = () => {
+    const { team1Id, team2Id, score1, score2 } = championshipGame;
+    if (score1 !== "" && score2 !== "") {
+      const s1 = parseInt(score1);
+      const s2 = parseInt(score2);
+      let winnerId;
+      if (s1 > s2) {
+        winnerId = team1Id;
+      } else if (s2 > s1) {
+        winnerId = team2Id;
+      }
+      
+      if (winnerId) {
+        const winner = teams.find(t => String(t.id) === winnerId);
+        if (winner) {
+          setChampion(winner.name);
+          toast({
+            title: "¡Campeón Definido!",
+            description: `El equipo campeón es ${winner.name}.`
+          });
+        }
+      } else {
+         setChampion(null);
+         toast({
+            title: "Resultado de Partido Final",
+            description: "El partido ha terminado en empate."
+          });
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Por favor, ingrese ambos marcadores para definir el campeón."
+      })
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
@@ -158,9 +203,9 @@ export default function Home() {
             <SoftballIcon className="w-12 h-12 text-primary" />
             <div>
               <h1 className="text-3xl font-bold tracking-tight font-headline text-primary">
-                Softball Showdown Central
+                Central de Softball Showdown
               </h1>
-              <p className="text-muted-foreground">THE SHOW PRO SERIES TOURNAMENT</p>
+              <p className="text-muted-foreground">TORNEO THE SHOW PRO SERIES</p>
             </div>
           </div>
         </header>
@@ -172,6 +217,17 @@ export default function Home() {
               teams={teams}
               standings={standings}
             />
+            {champion && (
+              <Card className="bg-card border-ring ring-2 ring-ring shadow-lg animate-in fade-in-50">
+                <CardHeader className="items-center text-center">
+                  <TrophyIcon className="w-16 h-16 text-ring" />
+                  <CardTitle className="text-2xl text-ring">¡Equipo Campeón!</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <p className="text-3xl font-bold tracking-wider text-foreground">{champion}</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
           <div className="xl:col-span-3 space-y-8">
             <ScheduleCard
@@ -179,7 +235,6 @@ export default function Home() {
               games={preliminaryGames}
               teams={teams}
               onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, false)}
-              gameCount={15}
               footer={
                 <div className="flex justify-end pt-4">
                   <Button onClick={calculateStandings}>Guardar Resultados y Actualizar Posiciones</Button>
@@ -191,13 +246,17 @@ export default function Home() {
               games={[championshipGame]}
               teams={teams}
               onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, true)}
-              gameCount={1}
+              footer={
+                <div className="flex justify-end pt-4">
+                  <Button onClick={handleSaveChampionship}>Guardar Resultado Final</Button>
+                </div>
+              }
             />
           </div>
         </div>
       </main>
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        Built for the love of the game.
+        Hecho por amor al juego.
       </footer>
     </div>
   );
