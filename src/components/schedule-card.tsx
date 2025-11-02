@@ -51,11 +51,6 @@ export default function ScheduleCard({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {!isChampionship && (
-          <CardDescription>
-            Ingrese los marcadores de cada partido.
-          </CardDescription>
-        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {games.map((game, index) => {

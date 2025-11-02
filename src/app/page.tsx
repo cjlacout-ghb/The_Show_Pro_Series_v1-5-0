@@ -90,6 +90,23 @@ export default function Home() {
       ra: 0,
       pct: 0,
     }));
+    
+    let hasTies = false;
+    for (const game of preliminaryGames) {
+      if (game.score1 !== "" && game.score2 !== "" && game.score1 === game.score2) {
+        hasTies = true;
+        break;
+      }
+    }
+
+    if (hasTies) {
+      toast({
+        variant: "destructive",
+        title: "Error de Puntuación",
+        description: "No se permiten empates. Por favor, revise los resultados.",
+      });
+      return;
+    }
 
     preliminaryGames.forEach(game => {
       if (game.team1Id && game.team2Id && game.score1 !== "" && game.score2 !== "") {
@@ -178,6 +195,16 @@ export default function Home() {
     if (score1 !== "" && score2 !== "") {
       const s1 = parseInt(score1);
       const s2 = parseInt(score2);
+
+      if (s1 === s2) {
+        toast({
+            variant: "destructive",
+            title: "Error en el Marcador Final",
+            description: "El partido final no puede terminar en empate."
+        });
+        return;
+      }
+      
       let winnerId;
       if (s1 > s2) {
         winnerId = team1Id;
@@ -196,12 +223,6 @@ export default function Home() {
             description: `El equipo campeón es ${winner.name}.`
           });
         }
-      } else {
-         setChampion(null);
-         toast({
-            title: "Resultado de Partido Final",
-            description: "El partido ha terminado en empate."
-          });
       }
     } else {
       toast({

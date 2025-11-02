@@ -8,6 +8,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import {
   Table,
@@ -43,6 +44,8 @@ export default function StandingsTable({
     if (index < standings.length - 1 && standing.pos === standings[index + 1].pos) return true;
     return false;
   }
+  
+  const hasTies = standings.some(isTied);
 
   return (
     <Card>
@@ -85,6 +88,11 @@ export default function StandingsTable({
           </Table>
         </div>
       </CardContent>
+      {hasTies && (
+        <CardFooter>
+          <p className="text-xs text-muted-foreground">(*) Equipos empatados</p>
+        </CardFooter>
+      )}
     </Card>
   );
 }
