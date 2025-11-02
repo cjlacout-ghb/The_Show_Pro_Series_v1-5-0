@@ -10,6 +10,7 @@ import StandingsTable from "@/components/standings-table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Confetti from "react-confetti";
 
 const initialTeams: Team[] = [
   { id: 1, name: "ACCIN VORTEX (ARG)" },
@@ -59,6 +60,7 @@ export default function Home() {
   const [championshipGame, setChampionshipGame] = useState<Game>(initialChampionshipGame);
   const [champion, setChampion] = useState<string | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const { toast } = useToast();
 
@@ -136,6 +138,15 @@ export default function Home() {
     });
 
     setStandings(finalStandings);
+    
+    if (finalStandings.length > 1) {
+      setChampionshipGame(prev => ({
+        ...prev,
+        team1Id: String(finalStandings[0].teamId),
+        team2Id: String(finalStandings[1].teamId)
+      }));
+    }
+    
     toast({
       title: "Posiciones Actualizadas",
       description: "Las posiciones se han recalculado con los últimos resultados.",
@@ -145,18 +156,14 @@ export default function Home() {
   
   useEffect(() => {
     // Initial calculation on mount
-    calculateStandings();
-  }, [calculateStandings]);
-
-  useEffect(() => {
-    if (standings.length > 1) {
-      setChampionshipGame(prev => ({
-        ...prev,
-        team1Id: String(standings[0].teamId),
-        team2Id: String(standings[1].teamId)
-      }));
-    }
-  }, [standings]);
+    const newStandings: Omit<Standing, "pos" | "gb">[] = teams.map(team => ({
+      teamId: team.id, w: 0, l: 0, rs: 0, ra: 0, pct: 0,
+    }));
+    const finalStandings: Standing[] = newStandings.map((standing, index) => ({
+      ...standing, pos: index + 1, gb: 0,
+    }));
+    setStandings(finalStandings);
+  }, [teams]);
   
   const handleSaveChampionship = () => {
     const { team1Id, team2Id, score1, score2 } = championshipGame;
@@ -174,6 +181,8 @@ export default function Home() {
         const winner = teams.find(t => String(t.id) === winnerId);
         if (winner) {
           setChampion(winner.name);
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 8000);
           toast({
             title: "¡Campeón Definido!",
             description: `El equipo campeón es ${winner.name}.`
@@ -197,6 +206,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
+      {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <header className="mb-10">
           <div className="flex items-center gap-4">
