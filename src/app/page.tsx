@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { Team, Game, Standing } from "@/lib/types";
-import { SoftballIcon, TrophyIcon } from "@/components/icons";
+import { LogoIcon, TrophyIcon } from "@/components/icons";
 import TeamSetup from "@/components/team-setup";
 import ScheduleCard from "@/components/schedule-card";
 import StandingsTable from "@/components/standings-table";
@@ -208,8 +208,11 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
       <main className="flex-1 container mx-auto p-4 md:p-8">
-        <header className="mb-10 flex items-center justify-center">
-          <SoftballIcon className="w-48 h-auto text-primary" />
+        <header className="mb-10 text-center">
+          <LogoIcon className="w-48 h-auto text-primary mx-auto" />
+          <h1 className="text-3xl md:text-4xl font-bold text-primary mt-4">TORNEO INTERNACIONAL DE SOFTBOL MASCULINO</h1>
+          <p className="text-lg md:text-xl text-muted-foreground mt-2">Paraná, ER - Argentina</p>
+          <p className="text-md md:text-lg text-muted-foreground">Marzo, 2026</p>
         </header>
 
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
@@ -264,3 +267,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

@@ -1,9 +1,10 @@
+
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Central de Softball Showdown',
+  title: 'Torneo Internacional de Softbol Masculino',
   description: 'Resultados y Posiciones del Torneo The Show Pro Series',
 };
 
@@ -18,6 +19,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Impact&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
         {children}
@@ -26,3 +28,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
