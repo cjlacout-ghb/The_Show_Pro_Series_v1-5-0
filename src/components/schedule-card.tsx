@@ -92,7 +92,7 @@ export default function ScheduleCard({
                 <div className="grid grid-cols-[1fr_80px] gap-4">
                     <div className={cn(
                         "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold",
-                        team1Wins && "text-primary"
+                        team1Wins && "text-primary font-bold border border-primary"
                     )}>
                         {getTeamPlaceholder(game, 1)}
                     </div>
@@ -102,13 +102,13 @@ export default function ScheduleCard({
                         value={game.score1}
                         className={cn(
                           "font-bold text-center text-lg",
-                          team1Wins && "text-primary border-primary"
+                          team1Wins && "text-primary border-primary font-bold"
                         )}
                         placeholder="R"
                     />
                      <div className={cn(
                         "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold",
-                        team2Wins && "text-primary"
+                        team2Wins && "text-primary font-bold border border-primary"
                      )}>
                         {getTeamPlaceholder(game, 2)}
                     </div>
@@ -118,7 +118,7 @@ export default function ScheduleCard({
                         value={game.score2}
                         className={cn(
                           "font-bold text-center text-lg",
-                           team2Wins && "text-primary border-primary"
+                           team2Wins && "text-primary border-primary font-bold"
                         )}
                         placeholder="R"
                     />
@@ -164,7 +164,7 @@ export default function ScheduleCard({
 
                 {!isChampionship && onSave && (
                    <div className="flex justify-end pt-4">
-                      <Button onClick={onSave}>Guardar Resultados y Actualizar Posiciones</Button>
+                      <Button variant="secondary" onClick={onSave}>Guardar Resultados y Actualizar Posiciones</Button>
                   </div>
                 )}
               </div>

@@ -415,7 +415,7 @@ export default function Home() {
               isChampionship
               footer={
                 <div className="flex justify-end pt-4">
-                  <Button onClick={handleSaveChampionship}>Guardar Resultado Final</Button>
+                  <Button variant="secondary" onClick={handleSaveChampionship}>Guardar Resultado Final</Button>
                 </div>
               }
             />
