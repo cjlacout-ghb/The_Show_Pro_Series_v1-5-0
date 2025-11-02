@@ -96,11 +96,25 @@ export default function Home() {
     const updater = isChampionship ? setChampionshipGame : setPreliminaryGames;
     updater((prevState: any) => {
         const updateInnings = (game: Game) => {
-            const newInnings = [...game.innings];
-            newInnings[inningIndex][teamIndex] = value;
+            const newInnings = game.innings.map(inning => [...inning]);
+            const normalizedValue = value.toUpperCase() === 'X' ? 'X' : value;
             
-            const score1 = newInnings.reduce((sum, inning) => sum + (parseInt(String(inning[0])) || 0), 0);
-            const score2 = newInnings.reduce((sum, inning) => sum + (parseInt(String(inning[1])) || 0), 0);
+            if (inningIndex >= newInnings.length) {
+                newInnings.push(["", ""]);
+            }
+            newInnings[inningIndex][teamIndex] = normalizedValue;
+            
+            // Auto-add new inning if typing in the last one
+            if(inningIndex === newInnings.length - 1 && value !== "") {
+              const score1 = newInnings.reduce((sum, inning) => sum + (parseInt(String(inning[0])) || 0), 0);
+              const score2 = newInnings.reduce((sum, inning) => sum + (parseInt(String(inning[1])) || 0), 0);
+              if (inningIndex >= 6 && score1 === score2) {
+                newInnings.push(["", ""]);
+              }
+            }
+
+            const score1 = newInnings.reduce((sum, inning) => sum + (inning[0] !== 'X' ? (parseInt(String(inning[0])) || 0) : 0), 0);
+            const score2 = newInnings.reduce((sum, inning) => sum + (inning[1] !== 'X' ? (parseInt(String(inning[1])) || 0) : 0), 0);
             
             return { ...game, innings: newInnings, score1: String(score1), score2: String(score2) };
         };
@@ -211,38 +225,40 @@ export default function Home() {
           return winsB - winsA;
         }
 
-        let rs_a = 0, ra_a = 0, innings_a = 0;
-        let rs_b = 0, ra_b = 0, innings_b = 0;
+        let rs_a = 0, ra_a = 0, innings_def_a = 0;
+        let rs_b = 0, ra_b = 0, innings_def_b = 0;
 
         preliminaryGames.forEach(game => {
           const isRelevant = tiedTeamIds.includes(parseInt(game.team1Id)) && tiedTeamIds.includes(parseInt(game.team2Id));
           if (!isRelevant) return;
 
-          const inningsPlayed = game.innings.filter(inn => inn[0] !== '' || inn[1] !== '').length;
+          const inningsPlayedTeam1 = game.innings.filter(inn => inn[0] !== '' && inn[0] !== 'X').length;
+          const inningsPlayedTeam2 = game.innings.filter(inn => inn[1] !== '' && inn[1] !== 'X').length;
+
 
           if (game.team1Id === String(a.teamId)) {
             rs_a += parseInt(game.score1);
             ra_a += parseInt(game.score2);
-            innings_a += inningsPlayed;
+            innings_def_a += inningsPlayedTeam2;
           } else if (game.team2Id === String(a.teamId)) {
             rs_a += parseInt(game.score2);
             ra_a += parseInt(game.score1);
-            innings_a += inningsPlayed;
+            innings_def_a += inningsPlayedTeam1;
           }
 
           if (game.team1Id === String(b.teamId)) {
             rs_b += parseInt(game.score1);
             ra_b += parseInt(game.score2);
-            innings_b += inningsPlayed;
+            innings_def_b += inningsPlayedTeam2;
           } else if (game.team2Id === String(b.teamId)) {
             rs_b += parseInt(game.score2);
             ra_b += parseInt(game.score1);
-            innings_b += inningsPlayed;
+            innings_def_b += inningsPlayedTeam1;
           }
         });
 
-        const tqbA = (innings_a > 0) ? (rs_a / innings_a) - (ra_a / innings_a) : 0;
-        const tqbB = (innings_b > 0) ? (rs_b / innings_b) - (ra_b / innings_b) : 0;
+        const tqbA = (innings_def_a > 0) ? (rs_a / innings_def_a) - (ra_a / innings_def_a) : 0;
+        const tqbB = (innings_def_b > 0) ? (rs_b / innings_def_b) - (ra_b / innings_def_b) : 0;
 
         if (tqbA !== tqbB) {
             return tqbB - tqbA;
@@ -405,5 +421,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

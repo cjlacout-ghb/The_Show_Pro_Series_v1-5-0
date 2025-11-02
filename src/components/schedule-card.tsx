@@ -54,12 +54,15 @@ export default function ScheduleCard({
       return teamNumber === 1 ? "2° RONDA INICIAL" : "1° RONDA INICIAL";
   }
   
-  const innings = Array.from({ length: 7 }, (_, i) => i + 1);
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        {!isChampionship && (
+          <CardDescription>
+            Agregue una 'X' en las entradas no jugadas. Se agregarán entradas adicionales si es necesario.
+          </CardDescription>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         {games.map((game, index) => {
@@ -68,6 +71,7 @@ export default function ScheduleCard({
             lastDay = game.day;
           }
           const gameNumber = isChampionship ? 16 : game.id;
+          const inningsCount = game.innings.length;
           
           return (
             <Fragment key={game.id}>
@@ -104,38 +108,36 @@ export default function ScheduleCard({
                 <Separator />
                 
                 {/* Inning-by-inning scores */}
-                <div>
-                  <div className="grid grid-cols-[3rem_repeat(7,_1fr)] gap-2 items-center text-xs text-center font-semibold text-muted-foreground mb-2">
+                <div className="overflow-x-auto">
+                  <div className="grid grid-cols-[3rem_repeat(12,minmax(0,1fr))] gap-2 items-center text-xs text-center font-semibold text-muted-foreground mb-2" style={{minWidth: `${3 + inningsCount * 3.5}rem`}}>
                      <div />
-                     {innings.map(inning => <div key={inning}>{inning}</div>)}
+                     {Array.from({ length: inningsCount }, (_, i) => i + 1).map(inning => <div key={inning}>{inning}</div>)}
                   </div>
                   {/* Team 1 Innings */}
-                  <div className="grid grid-cols-[3rem_repeat(7,_1fr)] gap-2 items-center">
+                  <div className="grid grid-cols-[3rem_repeat(12,minmax(0,1fr))] gap-2 items-center" style={{minWidth: `${3 + inningsCount * 3.5}rem`}}>
                     <div className="text-xs font-semibold text-right pr-2">VIS</div>
-                    {innings.map(inningNum => (
+                    {game.innings.map((inningData, inningNum) => (
                       <Input
                         key={`g${game.id}-t1-inn${inningNum}`}
-                        type="number"
-                        min="0"
+                        type="text"
                         placeholder=""
                         className="text-center"
-                        value={game.innings[inningNum - 1][0]}
-                        onChange={(e) => onInningChange(game.id, inningNum - 1, 0, e.target.value)}
+                        value={inningData[0]}
+                        onChange={(e) => onInningChange(game.id, inningNum, 0, e.target.value)}
                       />
                     ))}
                   </div>
                    {/* Team 2 Innings */}
-                   <div className="grid grid-cols-[3rem_repeat(7,_1fr)] gap-2 items-center mt-2">
+                   <div className="grid grid-cols-[3rem_repeat(12,minmax(0,1fr))] gap-2 items-center mt-2" style={{minWidth: `${3 + inningsCount * 3.5}rem`}}>
                     <div className="text-xs font-semibold text-right pr-2">LOC</div>
-                    {innings.map(inningNum => (
+                    {game.innings.map((inningData, inningNum) => (
                       <Input
                         key={`g${game.id}-t2-inn${inningNum}`}
-                        type="number"
-                        min="0"
+                        type="text"
                         placeholder=""
                         className="text-center"
-                        value={game.innings[inningNum - 1][1]}
-                        onChange={(e) => onInningChange(game.id, inningNum - 1, 1, e.target.value)}
+                        value={inningData[1]}
+                        onChange={(e) => onInningChange(game.id, inningNum, 1, e.target.value)}
                       />
                     ))}
                   </div>
@@ -155,5 +157,3 @@ export default function ScheduleCard({
     </Card>
   );
 }
-
-    
