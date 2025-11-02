@@ -209,8 +209,8 @@ export default function Home() {
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} />}
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <header className="mb-10 text-center">
-          <h1 className="text-5xl font-extrabold tracking-tight" style={{fontFamily: 'Impact, Charcoal, sans-serif'}}>THE SHOW PRO SERIES</h1>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary mt-4">TORNEO INTERNACIONAL DE SOFTBOL MASCULINO</h2>
+          <h1 className="text-5xl font-extrabold tracking-widest text-primary" style={{fontFamily: 'Impact, Charcoal, sans-serif'}}>THE SHOW PRO SERIES</h1>
+          <h2 className="text-3xl md:text-4xl font-bold mt-4">TORNEO INTERNACIONAL DE SOFTBOL MASCULINO</h2>
           <p className="text-lg md:text-xl text-muted-foreground mt-4">Paraná, ER - Argentina</p>
           <p className="text-md md:text-lg text-muted-foreground">Marzo, 2026</p>
         </header>
