@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { Team, Game, Standing } from "@/lib/types";
 import { TrophyIcon } from "@/components/icons";
 import TeamSetup from "@/components/team-setup";
@@ -66,6 +66,7 @@ export default function Home() {
   const [champion, setChampion] = useState<string | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const championCardRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   
@@ -344,6 +345,10 @@ export default function Home() {
         if (winner) {
           setChampion(winner.name);
           setShowConfetti(true);
+          setTimeout(() => {
+            setShowConfetti(false);
+            championCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
           setTimeout(() => setShowConfetti(false), 8000);
           toast({
             title: "¡Campeón Definido!",
@@ -379,15 +384,17 @@ export default function Home() {
               standings={standings}
             />
             {champion && (
-              <Card className="bg-card border-primary ring-2 ring-primary shadow-lg animate-in fade-in-50">
-                <CardHeader className="items-center text-center">
-                  <TrophyIcon className="w-16 h-16 text-primary" />
-                  <CardTitle className="text-2xl text-primary">¡Equipo Campeón!</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <p className="text-3xl font-bold tracking-wider text-foreground">{champion}</p>
-                </CardContent>
-              </Card>
+              <div ref={championCardRef}>
+                <Card className="bg-card border-primary ring-2 ring-primary shadow-lg animate-in fade-in-50">
+                  <CardHeader className="items-center text-center">
+                    <TrophyIcon className="w-16 h-16 text-primary" />
+                    <CardTitle className="text-2xl text-primary">¡Equipo Campeón!</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <p className="text-3xl font-bold tracking-wider text-foreground">{champion}</p>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
           <div className="xl:col-span-3 space-y-8">

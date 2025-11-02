@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Fragment } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 type ScheduleCardProps = {
   title: string;
@@ -65,13 +66,19 @@ export default function ScheduleCard({
         )}
       </CardHeader>
       <CardContent className="space-y-6">
-        {games.map((game, index) => {
+        {games.map((game) => {
           const showDay = game.day && game.day !== lastDay;
           if (showDay) {
             lastDay = game.day;
           }
           const gameNumber = isChampionship ? 16 : game.id;
           const inningsCount = game.innings.length;
+
+          const score1Num = game.score1 !== "" ? parseInt(game.score1) : -1;
+          const score2Num = game.score2 !== "" ? parseInt(game.score2) : -1;
+
+          const team1Wins = score1Num > score2Num;
+          const team2Wins = score2Num > score1Num;
           
           return (
             <Fragment key={game.id}>
@@ -83,24 +90,36 @@ export default function ScheduleCard({
                 
                 {/* Team Names & Total Scores */}
                 <div className="grid grid-cols-[1fr_80px] gap-4">
-                    <div className="p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold">
+                    <div className={cn(
+                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold",
+                        team1Wins && "text-primary"
+                    )}>
                         {getTeamPlaceholder(game, 1)}
                     </div>
                     <Input
                         type="number"
                         readOnly
                         value={game.score1}
-                        className="font-bold text-center text-lg"
+                        className={cn(
+                          "font-bold text-center text-lg",
+                          team1Wins && "text-primary border-primary"
+                        )}
                         placeholder="R"
                     />
-                     <div className="p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold">
+                     <div className={cn(
+                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold",
+                        team2Wins && "text-primary"
+                     )}>
                         {getTeamPlaceholder(game, 2)}
                     </div>
                     <Input
                         type="number"
                         readOnly
                         value={game.score2}
-                        className="font-bold text-center text-lg"
+                        className={cn(
+                          "font-bold text-center text-lg",
+                           team2Wins && "text-primary border-primary"
+                        )}
                         placeholder="R"
                     />
                 </div>
