@@ -85,9 +85,14 @@ export default function Home() {
   const [standings, setStandings] = useState<Standing[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   const championCardRef = useRef<HTMLDivElement>(null);
+  const standingsRef = useRef<HTMLDivElement>(null);
   const [confettiSize, setConfettiSize] = useState({ width: 0, height: 0, top: 0, left: 0 });
 
   const { toast } = useToast();
+
+  const handleGoToStandings = () => {
+    standingsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
   
   const handleGameChange = (
     gameId: number,
@@ -135,7 +140,15 @@ export default function Home() {
             const score1 = newInnings.reduce((sum, inning) => sum + (inning[0] !== 'X' ? (parseInt(String(inning[0])) || 0) : 0), 0);
             const score2 = newInnings.reduce((sum, inning) => sum + (inning[1] !== 'X' ? (parseInt(String(inning[1])) || 0) : 0), 0);
             
-            return { ...game, innings: newInnings, score1: String(score1), score2: String(score2) };
+            const updatedGame = { ...game, innings: newInnings, score1: String(score1), score2: String(score2) };
+
+            if (isChampionship) {
+              handleSaveChampionship(updatedGame);
+            } else {
+              calculateStandings(preliminaryGames.map(g => g.id === gameId ? updatedGame : g));
+            }
+            
+            return updatedGame;
         };
         
         if (isChampionship) {
@@ -147,7 +160,7 @@ export default function Home() {
     });
   };
 
-  const calculateStandings = useCallback(() => {
+  const calculateStandings = useCallback((gamesToProcess: Game[]) => {
     const newStandings: Omit<Standing, "pos" | "gb">[] = teams.map(team => ({
       teamId: team.id,
       w: 0,
@@ -158,7 +171,7 @@ export default function Home() {
     }));
     
     let hasTies = false;
-    for (const game of preliminaryGames) {
+    for (const game of gamesToProcess) {
       if (game.score1 !== "" && game.score2 !== "" && game.score1 === game.score2) {
         hasTies = true;
         break;
@@ -174,7 +187,7 @@ export default function Home() {
       return;
     }
 
-    preliminaryGames.forEach(game => {
+    gamesToProcess.forEach(game => {
       if (game.team1Id && game.team2Id && game.score1 !== "" && game.score2 !== "") {
         const team1Id = parseInt(game.team1Id);
         const team2Id = parseInt(game.team2Id);
@@ -227,7 +240,7 @@ export default function Home() {
         const tiedTeamIds = group.map(s => s.teamId);
         let winsA = 0;
         let winsB = 0;
-        preliminaryGames.forEach(game => {
+        gamesToProcess.forEach(game => {
           const gameTeamIds = [parseInt(game.team1Id), parseInt(game.team2Id)];
           if (tiedTeamIds.includes(gameTeamIds[0]) && tiedTeamIds.includes(gameTeamIds[1])) {
             if(game.team1Id === String(a.teamId) && game.team2Id === String(b.teamId)) {
@@ -247,7 +260,7 @@ export default function Home() {
         let rs_a = 0, ra_a = 0, innings_def_a = 0;
         let rs_b = 0, ra_b = 0, innings_def_b = 0;
 
-        preliminaryGames.forEach(game => {
+        gamesToProcess.forEach(game => {
           const isRelevant = tiedTeamIds.includes(parseInt(game.team1Id)) && tiedTeamIds.includes(parseInt(game.team2Id));
           if (!isRelevant) return;
 
@@ -311,28 +324,23 @@ export default function Home() {
 
     setStandings(finalStandings);
     
-    if (finalStandings.length > 1 && finalStandings[0].w + finalStandings[0].l > 0) {
+    if (finalStandings.length > 1 && finalStandings.every(s => s.w + s.l > 0)) {
       setChampionshipGame(prev => ({
         ...prev,
         team1Id: String(finalStandings[1].teamId),
         team2Id: String(finalStandings[0].teamId)
       }));
     }
-    
-    toast({
-      title: "Posiciones Actualizadas",
-      description: "Las posiciones se han recalculado con los últimos resultados.",
-    });
 
-  }, [preliminaryGames, teams, toast]);
+  }, [teams, toast]);
   
   useEffect(() => {
-    calculateStandings();
+    calculateStandings(preliminaryGames);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teams]);
   
-  const handleSaveChampionship = () => {
-    const { team1Id, team2Id, score1, score2 } = championshipGame;
+  const handleSaveChampionship = (finalGame: Game) => {
+    const { team1Id, team2Id, score1, score2 } = finalGame;
     if (score1 !== "" && score2 !== "") {
       const s1 = parseInt(score1);
       const s2 = parseInt(score2);
@@ -386,7 +394,7 @@ export default function Home() {
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} width={confettiSize.width} height={confettiSize.height} style={{ position: 'absolute', top: confettiSize.top, left: confettiSize.left }} />}
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <header className="mb-10 text-center">
-          <h1 className="text-5xl font-black tracking-widest text-primary font-['Impact',_'Haettenschweiler',_'Arial_Narrow_Bold',_sans-serif]">THE SHOW PRO SERIES</h1>
+          <h1 className="text-5xl font-black tracking-widest text-primary">THE SHOW PRO SERIES</h1>
           <h2 className="text-3xl md:text-4xl font-bold mt-4">TORNEO INTERNACIONAL DE SOFTBOL MASCULINO</h2>
           <p className="text-lg md:text-xl text-muted-foreground mt-4">Paraná, ER - Argentina</p>
           <p className="text-md md:text-lg text-muted-foreground">Marzo, 2026</p>
@@ -395,10 +403,12 @@ export default function Home() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           <div className="xl:col-span-2 space-y-8">
             <TeamSetup teams={teams} />
-            <StandingsTable
-              teams={teams}
-              standings={standings}
-            />
+            <div ref={standingsRef}>
+              <StandingsTable
+                teams={teams}
+                standings={standings}
+              />
+            </div>
             {champion && (
               <div ref={championCardRef}>
                 <Card className="bg-card border-primary ring-2 ring-primary shadow-lg animate-in fade-in-50">
@@ -420,7 +430,7 @@ export default function Home() {
               teams={teams}
               onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, false)}
               onInningChange={(gameId, inningIndex, teamIndex, value) => handleInningChange(gameId, inningIndex, teamIndex, value, false)}
-              onSave={calculateStandings}
+              onNavigate={handleGoToStandings}
             />
             <ScheduleCard
               title="Partido Final"
@@ -429,11 +439,6 @@ export default function Home() {
               onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, true)}
               onInningChange={(gameId, inningIndex, teamIndex, value) => handleInningChange(gameId, inningIndex, teamIndex, value, true)}
               isChampionship
-              footer={
-                <div className="flex justify-end pt-4">
-                  <Button variant="secondary" onClick={handleSaveChampionship}>Guardar Resultado Final</Button>
-                </div>
-              }
             />
           </div>
         </div>
