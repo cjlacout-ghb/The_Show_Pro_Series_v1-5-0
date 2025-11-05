@@ -59,6 +59,8 @@ export default function ScheduleCard({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
+        {!isChampionship && <CardDescription>
+          </CardDescription>}
       </CardHeader>
       <CardContent className="space-y-6">
         {games.map((game) => {
@@ -79,14 +81,17 @@ export default function ScheduleCard({
             <Fragment key={game.id}>
               {showDay && <h3 className="font-bold text-lg pt-4">{game.day}</h3>}
               <div className="space-y-4 rounded-lg border p-4">
-                <Label className="text-sm font-medium text-muted-foreground">
-                  Juego {gameNumber} {game.time && `/ ${game.time}`}
-                </Label>
+                <div className="flex justify-between items-center">
+                  <Label className="text-sm font-medium text-muted-foreground">
+                    Juego {gameNumber} {game.time && `/ ${game.time}`}
+                  </Label>
+                  <span className="text-xs text-muted-foreground text-right">Estadio Mundialista ‘Ing Nafaldo Cargnel’</span>
+                </div>
                 
                 {/* Team Names & Total Scores */}
                 <div className="grid grid-cols-[1fr_80px] gap-4">
                     <div className={cn(
-                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold",
+                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center",
                         team1Wins && "text-primary font-bold border border-primary"
                     )}>
                         {getTeamPlaceholder(game, 1)}
@@ -102,7 +107,7 @@ export default function ScheduleCard({
                         placeholder="R"
                     />
                      <div className={cn(
-                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center font-semibold",
+                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center",
                         team2Wins && "text-primary font-bold border border-primary"
                      )}>
                         {getTeamPlaceholder(game, 2)}
