@@ -44,20 +44,21 @@ const createInitialGames = (): Game[] => {
         if (game.id === 1) {
             return {
                 ...game,
-                score1: "7",
-                score2: "5",
-                hits1: "",
-                errors1: "",
-                hits2: "",
-                errors2: "",
+                score1: "8",
+                score2: "9",
+                hits1: "8",
+                errors1: "3",
+                hits2: "10",
+                errors2: "3",
                 innings: [
-                    ["1", "0"],
-                    ["1", "0"],
-                    ["1", "0"],
-                    ["1", "0"],
-                    ["1", "0"],
                     ["1", "2"],
-                    ["1", "3"],
+                    ["1", "0"],
+                    ["1", "1"],
+                    ["1", "1"],
+                    ["1", "1"],
+                    ["1", "1"],
+                    ["1", "1"],
+                    ["1", "2"],
                 ],
             };
         }
@@ -461,5 +462,7 @@ export default function Home() {
     </div>
   );
 }
+
+    
 
     
