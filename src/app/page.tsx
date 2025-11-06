@@ -263,12 +263,21 @@ export default function Home() {
         if (b.pct !== a.pct) {
             return b.pct - a.pct;
         }
-        // If percentages are equal, team with fewer games played is ranked higher
+
+        // Tie-breaker 1: Run Differential
+        const diffA = a.rs - a.ra;
+        const diffB = b.rs - b.ra;
+        if (diffB !== diffA) {
+            return diffB - diffA;
+        }
+        
+        // Tie-breaker 2: Fewer games played is better for teams with 0-0 record
         const gamesA = a.w + a.l;
         const gamesB = b.w + b.l;
         if (gamesA !== gamesB) {
             return gamesA - gamesB;
         }
+
         return 0; // Fallback for further tie-breaking if needed
     });
 
