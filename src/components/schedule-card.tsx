@@ -77,9 +77,6 @@ export default function ScheduleCard({
           const team1Wins = score1Num > score2Num;
           const team2Wins = score2Num > score1Num;
           
-          const rheGridCols = "grid-cols-[1fr_2.5rem_2.5rem_2.5rem]";
-          const rheHeaderGridCols = "grid-cols-[1fr_2.5rem_2.5rem_2.5rem] pr-[1px]";
-
           return (
             <Fragment key={game.id}>
               {showDay && <h3 className="font-bold text-lg pt-4">{game.day}</h3>}
@@ -91,15 +88,7 @@ export default function ScheduleCard({
                   <span className="text-xs text-muted-foreground text-right">Estadio Mundialista ‘Ing Nafaldo Cargnel’</span>
                 </div>
                 
-                {/* Team Names & R/H/E */}
-                 <div className={`grid ${rheHeaderGridCols} gap-x-2 items-center text-center text-xs font-bold text-muted-foreground`}>
-                    <div />
-                    <div>R</div>
-                    <div>H</div>
-                    <div>E</div>
-                </div>
-
-                <div className={`grid ${rheGridCols} gap-x-2 gap-y-2`}>
+                <div className="grid grid-cols-[1fr_4rem] gap-x-4 gap-y-2 items-center">
                     <div className={cn(
                         "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
                         team1Wins && "text-primary font-bold border border-primary"
@@ -107,18 +96,14 @@ export default function ScheduleCard({
                         {getTeamPlaceholder(game, 1)}
                     </div>
                     <Input type="number" readOnly value={game.score1} className={cn("font-bold text-center text-lg", team1Wins && "text-primary border-primary")} placeholder="R"/>
-                    <Input type="number" value={game.hits1} onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)} className="font-bold text-center text-lg" placeholder="H" />
-                    <Input type="number" value={game.errors1} onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)} className="font-bold text-center text-lg" placeholder="E" />
-
-                     <div className={cn(
+                    
+                    <div className={cn(
                         "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
                         team2Wins && "text-primary font-bold border border-primary"
                      )}>
                         {getTeamPlaceholder(game, 2)}
                     </div>
                     <Input type="number" readOnly value={game.score2} className={cn("font-bold text-center text-lg", team2Wins && "text-primary border-primary")} placeholder="R"/>
-                    <Input type="number" value={game.hits2} onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)} className="font-bold text-center text-lg" placeholder="H" />
-                    <Input type="number" value={game.errors2} onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)} className="font-bold text-center text-lg" placeholder="E" />
                 </div>
                 
                 <Separator />
