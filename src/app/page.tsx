@@ -383,7 +383,7 @@ export default function Home() {
           setTimeout(() => {
             if (championCardRef.current) {
               championCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              const { width, height, top, left } = championCardRef.current.getBoundingClientRect();
+              const { width, height, top, left } = championCardref.current.getBoundingClientRect();
               setConfettiSize({ width, height, top: top + window.scrollY, left: left + window.scrollX });
             }
           }, 100);
@@ -408,10 +408,12 @@ export default function Home() {
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} width={confettiSize.width} height={confettiSize.height} style={{ position: 'absolute', top: confettiSize.top, left: confettiSize.left }} />}
       <main className="flex-1 container mx-auto p-4 md:p-8">
         <header className="mb-10 flex items-center justify-start gap-8">
-          <Image src="/images/logo.png" alt="The Show Pro Series Logo" width={90} height={90} />
+          <Image src="/images/logo.png" alt="The Show Pro Series Logo" width={180} height={180} />
           <div className="text-left">
             <h1 className="text-4xl md:text-5xl font-black tracking-widest text-primary">THE SHOW PRO SERIES</h1>
-            <h2 className="text-2xl md:text-4xl font-bold mt-2">TORNEO INTERNACIONAL DE SOFTBOL MASCULINO</h2>
+            <h2 className="text-2xl md:text-4xl font-bold mt-2">
+              TORNEO INTERNACIONAL<br/>DE SOFTBOL MASCULINO
+            </h2>
             <p className="text-md md:text-xl text-muted-foreground mt-2">Paraná, ER - Argentina</p>
             <p className="text-sm md:text-lg text-muted-foreground">Marzo, 2026</p>
           </div>
