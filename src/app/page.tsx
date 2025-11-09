@@ -507,7 +507,7 @@ export default function Home() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           <div className="xl:col-span-2 space-y-8">
             <div ref={teamRosterRef}>
-              <TeamSetup teams={teams} openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} />
+              <TeamSetup teams={teams} openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} onNavigate={handleReturnToTop} />
             </div>
             <div ref={standingsRef}>
               <StandingsTable

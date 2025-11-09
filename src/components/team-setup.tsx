@@ -8,15 +8,18 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "./ui/button";
+import { ArrowUpCircle } from "lucide-react";
 
 type TeamSetupProps = {
   teams: Team[];
   openAccordion: string | undefined;
   setOpenAccordion: (value: string | undefined) => void;
+  onNavigate?: () => void;
 };
 
-export default function TeamSetup({ teams, openAccordion, setOpenAccordion }: TeamSetupProps) {
+export default function TeamSetup({ teams, openAccordion, setOpenAccordion, onNavigate }: TeamSetupProps) {
   return (
     <Card>
       <CardHeader>
@@ -46,6 +49,14 @@ export default function TeamSetup({ teams, openAccordion, setOpenAccordion }: Te
           ))}
         </Accordion>
       </CardContent>
+      {onNavigate && (
+        <CardFooter className="flex justify-end w-full">
+            <Button variant="secondary" onClick={onNavigate}>
+                <ArrowUpCircle className="mr-2 h-4 w-4" />
+                Volver al inicio
+            </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 }
