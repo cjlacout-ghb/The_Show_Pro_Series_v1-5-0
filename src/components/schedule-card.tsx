@@ -16,6 +16,7 @@ import { Fragment } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { ArrowUpCircle } from "lucide-react";
 
 type ScheduleCardProps = {
   title: string;
@@ -95,7 +96,7 @@ export default function ScheduleCard({
                     )}>
                         {getTeamPlaceholder(game, 1)}
                     </div>
-                    <Input type="number" readOnly value={game.score1} className={cn("font-bold text-center text-lg", team1Wins && "text-primary border-primary")} placeholder="R"/>
+                    <Input type="number" readOnly value={game.score1} className={cn("font-bold text-lg text-center", team1Wins && "text-primary border-primary")} placeholder="R"/>
                     
                     <div className={cn(
                         "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
@@ -103,7 +104,7 @@ export default function ScheduleCard({
                      )}>
                         {getTeamPlaceholder(game, 2)}
                     </div>
-                    <Input type="number" readOnly value={game.score2} className={cn("font-bold text-center text-lg", team2Wins && "text-primary border-primary")} placeholder="R"/>
+                    <Input type="number" readOnly value={game.score2} className={cn("font-bold text-lg text-center", team2Wins && "text-primary border-primary")} placeholder="R"/>
                 </div>
                 
                 <Separator />
@@ -144,9 +145,12 @@ export default function ScheduleCard({
                   </div>
                 </div>
 
-                {!isChampionship && onNavigate && (
+                {onNavigate && (
                    <div className="flex justify-end pt-4">
-                      <Button variant="secondary" onClick={onNavigate}>Ir a Posiciones</Button>
+                      <Button variant="secondary" onClick={onNavigate}>
+                        <ArrowUpCircle className="mr-2 h-4 w-4" />
+                        Volver Arriba
+                      </Button>
                   </div>
                 )}
               </div>
@@ -158,3 +162,5 @@ export default function ScheduleCard({
     </Card>
   );
 }
+
+    

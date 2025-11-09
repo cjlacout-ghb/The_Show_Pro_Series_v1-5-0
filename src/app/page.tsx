@@ -3,7 +3,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { Team, Game, Standing, Player } from "@/lib/types";
-import { TrophyIcon, CalendarDays, Users, BarChart3 } from "lucide-react";
+import { TrophyIcon, CalendarDays, Users, BarChart3, ArrowUpCircle } from "lucide-react";
 import TeamSetup from "@/components/team-setup";
 import ScheduleCard from "@/components/schedule-card";
 import StandingsTable from "@/components/standings-table";
@@ -127,6 +127,7 @@ export default function Home() {
   const [standings, setStandings] = useState<Standing[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
   
+  const mainRef = useRef<HTMLDivElement>(null);
   const teamRosterRef = useRef<HTMLDivElement>(null);
   const scheduleRef = useRef<HTMLDivElement>(null);
   const standingsRef = useRef<HTMLDivElement>(null);
@@ -468,7 +469,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       {showConfetti && <Confetti recycle={false} numberOfPieces={500} width={confettiSize.width} height={confettiSize.height} style={{ position: 'absolute', top: confettiSize.top, left: confettiSize.left }} />}
-      <main className="flex-1 container mx-auto p-4 md:p-8">
+      <main ref={mainRef} className="flex-1 container mx-auto p-4 md:p-8">
         <header className="mb-10 flex items-center justify-start gap-8">
           <Image src="/images/logo.png" alt="The Show Pro Series Logo" width={180} height={180} />
           <div className="text-left">
@@ -482,17 +483,17 @@ export default function Home() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            <Button size="lg" variant="outline" onClick={() => handleScrollTo(teamRosterRef)}>
+            <Button size="lg" variant="default" onClick={() => handleScrollTo(teamRosterRef)}>
                 <Users className="mr-2 h-5 w-5" />
-                Team Roster Input
+                Equipos y Jugadores
             </Button>
-            <Button size="lg" variant="outline" onClick={() => handleScrollTo(scheduleRef)}>
+            <Button size="lg" variant="default" onClick={() => handleScrollTo(scheduleRef)}>
                 <CalendarDays className="mr-2 h-5 w-5" />
-                Schedule and Results
+                Partidos y Resultados
             </Button>
-            <Button size="lg" variant="outline" onClick={() => handleScrollTo(standingsRef)}>
+            <Button size="lg" variant="default" onClick={() => handleScrollTo(standingsRef)}>
                 <BarChart3 className="mr-2 h-5 w-5" />
-                Standings Display
+                Tabla de Posiciones
             </Button>
         </div>
 
@@ -506,7 +507,7 @@ export default function Home() {
               <StandingsTable
                 teams={teams}
                 standings={standings}
-                onNavigate={() => handleScrollTo(scheduleRef)}
+                onNavigate={() => handleScrollTo(mainRef)}
               />
             </div>
             {champion && (
@@ -531,7 +532,7 @@ export default function Home() {
                 teams={teams}
                 onGameChange={handleGameChange}
                 onInningChange={handleInningChange}
-                onNavigate={() => handleScrollTo(standingsRef)}
+                onNavigate={() => handleScrollTo(mainRef)}
               />
             </div>
             <ScheduleCard
@@ -553,4 +554,5 @@ export default function Home() {
   );
 }
 
+    
     
