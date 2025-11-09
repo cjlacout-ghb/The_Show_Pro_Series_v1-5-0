@@ -30,7 +30,7 @@ export default function TeamSetup({ teams }: TeamSetupProps) {
                   <ul className="pl-4 list-disc space-y-1">
                     {team.players.map((player) => (
                       <li key={player.id} className="text-sm">
-                        #{player.number} - {player.name} ({player.role})
+                        #{player.number} - {player.name} ({player.role}) - {player.placeOfBirth}
                       </li>
                     ))}
                   </ul>

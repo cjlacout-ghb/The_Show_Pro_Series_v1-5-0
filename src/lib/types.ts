@@ -4,6 +4,7 @@ export type Player = {
   name: string;
   number: number;
   role: string;
+  placeOfBirth: string;
 };
 
 export type Team = {
