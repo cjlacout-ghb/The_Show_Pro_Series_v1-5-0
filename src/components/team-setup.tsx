@@ -12,16 +12,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type TeamSetupProps = {
   teams: Team[];
+  openAccordion: string | undefined;
+  setOpenAccordion: (value: string | undefined) => void;
 };
 
-export default function TeamSetup({ teams }: TeamSetupProps) {
+export default function TeamSetup({ teams, openAccordion, setOpenAccordion }: TeamSetupProps) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Equipos Participantes</CardTitle>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion type="single" collapsible className="w-full" value={openAccordion} onValueChange={setOpenAccordion}>
           {teams.map((team) => (
             <AccordionItem value={`item-${team.id}`} key={team.id}>
               <AccordionTrigger>{team.name}</AccordionTrigger>
@@ -47,5 +49,3 @@ export default function TeamSetup({ teams }: TeamSetupProps) {
     </Card>
   );
 }
-
-    

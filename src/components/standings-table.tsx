@@ -100,7 +100,7 @@ export default function StandingsTable({
             <div className="flex justify-end w-full">
                 <Button variant="secondary" onClick={onNavigate}>
                     <ArrowUpCircle className="mr-2 h-4 w-4" />
-                    Volver Arriba
+                    Volver al inicio
                 </Button>
             </div>
           )}
@@ -108,5 +108,3 @@ export default function StandingsTable({
     </Card>
   );
 }
-
-    

@@ -16,7 +16,7 @@ import { Fragment } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
-import { ArrowUpCircle } from "lucide-react";
+import { ArrowUpCircle, BarChart3 } from "lucide-react";
 
 type ScheduleCardProps = {
   title: string;
@@ -25,6 +25,7 @@ type ScheduleCardProps = {
   onGameChange: (gameId: number, field: keyof Game, value: string) => void;
   onInningChange: (gameId: number, inningIndex: number, teamIndex: 0 | 1, value: string) => void;
   onNavigate?: () => void;
+  onNavigateToStandings?: () => void;
   footer?: React.ReactNode;
   isChampionship?: boolean;
 };
@@ -36,6 +37,7 @@ export default function ScheduleCard({
   onGameChange,
   onInningChange,
   onNavigate,
+  onNavigateToStandings,
   footer,
   isChampionship = false
 }: ScheduleCardProps) {
@@ -145,14 +147,20 @@ export default function ScheduleCard({
                   </div>
                 </div>
 
-                {onNavigate && (
-                   <div className="flex justify-end pt-4">
-                      <Button variant="secondary" onClick={onNavigate}>
-                        <ArrowUpCircle className="mr-2 h-4 w-4" />
-                        Volver Arriba
-                      </Button>
-                  </div>
-                )}
+                <div className="flex justify-end gap-2 pt-4">
+                    {onNavigateToStandings && !isChampionship && (
+                        <Button variant="outline" onClick={onNavigateToStandings}>
+                            <BarChart3 className="mr-2 h-4 w-4" />
+                            Ir a posiciones
+                        </Button>
+                    )}
+                    {onNavigate && (
+                        <Button variant="secondary" onClick={onNavigate}>
+                            <ArrowUpCircle className="mr-2 h-4 w-4" />
+                            Volver al inicio
+                        </Button>
+                    )}
+                </div>
               </div>
             </Fragment>
           );
@@ -162,5 +170,3 @@ export default function ScheduleCard({
     </Card>
   );
 }
-
-    

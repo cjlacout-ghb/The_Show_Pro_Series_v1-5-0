@@ -126,6 +126,7 @@ export default function Home() {
   const [champion, setChampion] = useState<string | null>(null);
   const [standings, setStandings] = useState<Standing[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState<string | undefined>(undefined);
   
   const mainRef = useRef<HTMLDivElement>(null);
   const teamRosterRef = useRef<HTMLDivElement>(null);
@@ -139,6 +140,11 @@ export default function Home() {
 
   const handleScrollTo = (ref: React.RefObject<HTMLDivElement>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  
+  const handleReturnToTop = () => {
+    setOpenAccordion(undefined);
+    handleScrollTo(mainRef);
   };
   
   const handleGameChange = (
@@ -414,7 +420,7 @@ export default function Home() {
   
   useEffect(() => {
     calculateStandings(preliminaryGames);
-  }, [teams]);
+  }, [teams, calculateStandings]);
   
   const handleSaveChampionship = (finalGame: Game) => {
     const { team1Id, team2Id, score1, score2 } = finalGame;
@@ -483,15 +489,15 @@ export default function Home() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            <Button size="lg" variant="default" onClick={() => handleScrollTo(teamRosterRef)}>
+            <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90" onClick={() => handleScrollTo(teamRosterRef)}>
                 <Users className="mr-2 h-5 w-5" />
                 Equipos y Jugadores
             </Button>
-            <Button size="lg" variant="default" onClick={() => handleScrollTo(scheduleRef)}>
+            <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90" onClick={() => handleScrollTo(scheduleRef)}>
                 <CalendarDays className="mr-2 h-5 w-5" />
                 Partidos y Resultados
             </Button>
-            <Button size="lg" variant="default" onClick={() => handleScrollTo(standingsRef)}>
+            <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90" onClick={() => handleScrollTo(standingsRef)}>
                 <BarChart3 className="mr-2 h-5 w-5" />
                 Tabla de Posiciones
             </Button>
@@ -501,13 +507,13 @@ export default function Home() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
           <div className="xl:col-span-2 space-y-8">
             <div ref={teamRosterRef}>
-              <TeamSetup teams={teams} />
+              <TeamSetup teams={teams} openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} />
             </div>
             <div ref={standingsRef}>
               <StandingsTable
                 teams={teams}
                 standings={standings}
-                onNavigate={() => handleScrollTo(mainRef)}
+                onNavigate={handleReturnToTop}
               />
             </div>
             {champion && (
@@ -532,7 +538,8 @@ export default function Home() {
                 teams={teams}
                 onGameChange={handleGameChange}
                 onInningChange={handleInningChange}
-                onNavigate={() => handleScrollTo(mainRef)}
+                onNavigate={handleReturnToTop}
+                onNavigateToStandings={() => handleScrollTo(standingsRef)}
               />
             </div>
             <ScheduleCard
@@ -553,6 +560,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
-    
