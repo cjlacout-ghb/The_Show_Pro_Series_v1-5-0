@@ -10,6 +10,7 @@ import StandingsTable from "@/components/standings-table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Confetti from "react-confetti";
 import Image from "next/image";
 
@@ -574,10 +575,25 @@ export default function Home() {
             <div ref={statisticsRef}>
               <Card>
                 <CardHeader>
-                  <CardTitle>Panel de Líderes (Statistics)</CardTitle>
+                  <CardTitle>Panel de Líderes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">Esta sección se encuentra en desarrollo.</p>
+                    <Tabs defaultValue="ataque" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="ataque">Ataque</TabsTrigger>
+                            <TabsTrigger value="pitcheo">Pitcheo</TabsTrigger>
+                            <TabsTrigger value="defensa">Defensa</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="ataque">
+                            <p className="text-muted-foreground mt-4">Esta sección se encuentra en desarrollo.</p>
+                        </TabsContent>
+                        <TabsContent value="pitcheo">
+                            <p className="text-muted-foreground mt-4">Esta sección se encuentra en desarrollo.</p>
+                        </TabsContent>
+                        <TabsContent value="defensa">
+                            <p className="text-muted-foreground mt-4">Esta sección se encuentra en desarrollo.</p>
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
               </Card>
             </div>
@@ -613,4 +629,3 @@ export default function Home() {
   );
 }
 
-    
