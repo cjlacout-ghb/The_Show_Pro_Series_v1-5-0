@@ -1,7 +1,8 @@
 
 "use client";
 
-import type { Game, Team } from "@/lib/types";
+import BoxScoreDialog from "./BoxScoreDialog";
+import type { Game, Team, BattingStat, PitchingStat } from "@/lib/types";
 import {
   Card,
   CardContent,
@@ -23,6 +24,8 @@ type ScheduleCardProps = {
   teams: Team[];
   onGameChange: (gameId: number, field: keyof Game, value: string) => void;
   onInningChange: (gameId: number, inningIndex: number, teamIndex: 0 | 1, value: string) => void;
+  onSaveBatting: (gameId: number, playerId: number, stats: Partial<BattingStat>) => Promise<void>;
+  onSavePitching: (gameId: number, playerId: number, stats: Partial<PitchingStat>) => Promise<void>;
   onNavigate?: () => void;
   onNavigateToStandings?: () => void;
   footer?: React.ReactNode;
@@ -35,6 +38,8 @@ export default function ScheduleCard({
   teams,
   onGameChange,
   onInningChange,
+  onSaveBatting,
+  onSavePitching,
   onNavigate,
   onNavigateToStandings,
   footer,
@@ -43,26 +48,26 @@ export default function ScheduleCard({
   const getTeamName = (teamId: string) => {
     return teams.find((t) => String(t.id) === teamId)?.name || "";
   };
-  
+
   let lastDay: string | undefined = undefined;
 
   const getTeamPlaceholder = (game: Game, teamNumber: 1 | 2) => {
-      const teamId = teamNumber === 1 ? game.team1Id : game.team2Id;
-      if (!isChampionship) {
-        return getTeamName(teamId);
-      }
-      if (game.team1Id && game.team2Id) {
-        return getTeamName(teamId);
-      }
-      return teamNumber === 1 ? "2° RONDA INICIAL" : "1° RONDA INICIAL";
+    const teamId = teamNumber === 1 ? game.team1Id : game.team2Id;
+    if (!isChampionship) {
+      return getTeamName(teamId);
+    }
+    if (game.team1Id && game.team2Id) {
+      return getTeamName(teamId);
+    }
+    return teamNumber === 1 ? "2° RONDA INICIAL" : "1° RONDA INICIAL";
   }
-  
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         {!isChampionship && <CardDescription>
-          </CardDescription>}
+        </CardDescription>}
       </CardHeader>
       <CardContent className="space-y-6">
         {games.map((game) => {
@@ -78,7 +83,7 @@ export default function ScheduleCard({
 
           const team1Wins = score1Num > score2Num;
           const team2Wins = score2Num > score1Num;
-          
+
           return (
             <Fragment key={game.id}>
               {showDay && <h3 className="font-bold text-lg pt-4">{game.day}</h3>}
@@ -91,42 +96,42 @@ export default function ScheduleCard({
                 </div>
 
                 <div className="grid grid-cols-[1fr_2.5rem_2.5rem_2.5rem] gap-x-2 gap-y-2 items-center">
-                    <div className="font-semibold">EQUIPO</div>
-                    <div className="text-center font-semibold">R</div>
-                    <div className="text-center font-semibold">H</div>
-                    <div className="text-center font-semibold">E</div>
+                  <div className="font-semibold">EQUIPO</div>
+                  <div className="text-center font-semibold">R</div>
+                  <div className="text-center font-semibold">H</div>
+                  <div className="text-center font-semibold">E</div>
 
-                    <div className={cn(
-                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
-                        team1Wins && "text-primary font-bold border border-primary"
-                    )}>
-                        {getTeamPlaceholder(game, 1)}
-                    </div>
-                    <Input type="number" readOnly value={game.score1} className={cn("font-bold text-lg text-center p-0", team1Wins && "text-primary border-primary")} placeholder="R"/>
-                    <Input type="number" value={game.hits1} onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)} className="text-center p-0" placeholder="H"/>
-                    <Input type="number" value={game.errors1} onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)} className="text-center p-0" placeholder="E"/>
-                    
-                    <div className={cn(
-                        "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
-                        team2Wins && "text-primary font-bold border border-primary"
-                     )}>
-                        {getTeamPlaceholder(game, 2)}
-                    </div>
-                    <Input type="number" readOnly value={game.score2} className={cn("font-bold text-lg text-center p-0", team2Wins && "text-primary border-primary")} placeholder="R"/>
-                    <Input type="number" value={game.hits2} onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)} className="text-center p-0" placeholder="H"/>
-                    <Input type="number" value={game.errors2} onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)} className="text-center p-0" placeholder="E"/>
+                  <div className={cn(
+                    "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
+                    team1Wins && "text-primary font-bold border border-primary"
+                  )}>
+                    {getTeamPlaceholder(game, 1)}
+                  </div>
+                  <Input type="number" readOnly value={game.score1} className={cn("font-bold text-lg text-center p-0", team1Wins && "text-primary border-primary")} placeholder="R" />
+                  <Input type="number" value={game.hits1} onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)} className="text-center p-0" placeholder="H" />
+                  <Input type="number" value={game.errors1} onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)} className="text-center p-0" placeholder="E" />
+
+                  <div className={cn(
+                    "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
+                    team2Wins && "text-primary font-bold border border-primary"
+                  )}>
+                    {getTeamPlaceholder(game, 2)}
+                  </div>
+                  <Input type="number" readOnly value={game.score2} className={cn("font-bold text-lg text-center p-0", team2Wins && "text-primary border-primary")} placeholder="R" />
+                  <Input type="number" value={game.hits2} onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)} className="text-center p-0" placeholder="H" />
+                  <Input type="number" value={game.errors2} onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)} className="text-center p-0" placeholder="E" />
                 </div>
-                
+
                 <Separator />
-                
+
                 {/* Inning-by-inning scores */}
                 <div className="overflow-x-auto">
-                  <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center text-xs text-center font-semibold text-muted-foreground mb-2" style={{minWidth: `${3 + inningsCount * 2.5}rem`}}>
-                     <div>&nbsp;</div>
-                     {Array.from({ length: inningsCount }, (_, i) => i + 1).map(inning => <div key={inning}>{inning}</div>)}
+                  <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center text-xs text-center font-semibold text-muted-foreground mb-2" style={{ minWidth: `${3 + inningsCount * 2.5}rem` }}>
+                    <div>&nbsp;</div>
+                    {Array.from({ length: inningsCount }, (_, i) => i + 1).map(inning => <div key={inning}>{inning}</div>)}
                   </div>
                   {/* Team 1 Innings */}
-                  <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center" style={{minWidth: `${3 + inningsCount * 2.5}rem`}}>
+                  <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center" style={{ minWidth: `${3 + inningsCount * 2.5}rem` }}>
                     <div className="text-xs font-semibold text-right pr-2">VIS</div>
                     {game.innings.map((inningData, inningNum) => (
                       <Input
@@ -139,8 +144,8 @@ export default function ScheduleCard({
                       />
                     ))}
                   </div>
-                   {/* Team 2 Innings */}
-                   <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center mt-2" style={{minWidth: `${3 + inningsCount * 2.5}rem`}}>
+                  {/* Team 2 Innings */}
+                  <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center mt-2" style={{ minWidth: `${3 + inningsCount * 2.5}rem` }}>
                     <div className="text-xs font-semibold text-right pr-2">LOC</div>
                     {game.innings.map((inningData, inningNum) => (
                       <Input
@@ -155,17 +160,25 @@ export default function ScheduleCard({
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 pt-4">
+                <div className="flex justify-between items-center pt-4">
+                  <BoxScoreDialog
+                    game={game}
+                    teams={teams}
+                    onSaveBatting={(playerId, stats) => onSaveBatting(game.id, playerId, stats)}
+                    onSavePitching={(playerId, stats) => onSavePitching(game.id, playerId, stats)}
+                  />
+                  <div className="flex gap-2">
                     {onNavigateToStandings && !isChampionship && (
-                        <Button size="sm" variant="secondary" onClick={onNavigateToStandings}>
-                            Ir a posiciones
-                        </Button>
+                      <Button size="sm" variant="secondary" onClick={onNavigateToStandings}>
+                        Ir a posiciones
+                      </Button>
                     )}
                     {onNavigate && (
-                        <Button size="sm" variant="secondary" onClick={onNavigate}>
-                            Ir al inicio
-                        </Button>
+                      <Button size="sm" variant="secondary" onClick={onNavigate}>
+                        Ir al inicio
+                      </Button>
                     )}
+                  </div>
                 </div>
               </div>
             </Fragment>
@@ -177,4 +190,3 @@ export default function ScheduleCard({
   );
 }
 
-    

@@ -17,6 +17,10 @@ export async function getGames() {
         orderBy: {
             id: 'asc',
         },
+        include: {
+            battingStats: true,
+            pitchingStats: true,
+        }
     })
 
     // Parse innings from JSON string back to array
@@ -24,7 +28,6 @@ export async function getGames() {
         ...game,
         innings: JSON.parse(game.innings),
         // Ensure numeric fields are numbers if they came out as null/string (safety)
-        // Prisma types should handle this, but for the frontend generic types:
         team1Id: String(game.team1Id),
         team2Id: String(game.team2Id),
         score1: game.score1?.toString() ?? "",
@@ -34,6 +37,72 @@ export async function getGames() {
         errors1: game.errors1?.toString() ?? "",
         errors2: game.errors2?.toString() ?? "",
     }))
+}
+
+export async function saveBattingStat(data: { playerId: number, gameId: number, stats: any }) {
+    const { playerId, gameId, stats } = data;
+
+    await prisma.battingStat.upsert({
+        where: {
+            playerId_gameId: {
+                playerId,
+                gameId
+            }
+        },
+        update: stats,
+        create: {
+            playerId,
+            gameId,
+            ...stats
+        }
+    });
+
+    revalidatePath('/');
+}
+
+export async function savePitchingStat(data: { playerId: number, gameId: number, stats: any }) {
+    const { playerId, gameId, stats } = data;
+
+    await prisma.pitchingStat.upsert({
+        where: {
+            playerId_gameId: {
+                playerId,
+                gameId
+            }
+        },
+        update: stats,
+        create: {
+            playerId,
+            gameId,
+            ...stats
+        }
+    });
+
+    revalidatePath('/');
+}
+
+export async function getAllStats() {
+    const battingStats = await prisma.battingStat.findMany({
+        include: {
+            player: {
+                include: {
+                    team: true
+                }
+            }
+        }
+    });
+
+    const pitchingStats = await prisma.pitchingStat.findMany({
+        include: {
+            player: {
+                include: {
+                    team: true
+                }
+            }
+        }
+    });
+
+    return { battingStats, pitchingStats };
 }
 
 export async function updateGame(gameId: number, data: any) {

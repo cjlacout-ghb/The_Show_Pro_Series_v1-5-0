@@ -12,14 +12,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Confetti from "react-confetti";
 import Image from "next/image";
-import { updateGame } from "@/app/actions";
+import { updateGame, saveBattingStat, savePitchingStat } from "@/app/actions";
+import type { BattingStat, PitchingStat } from "@/lib/types";
+import LeaderBoard from "./LeaderBoard";
 
 interface TournamentManagerProps {
     initialTeams: Team[];
     initialGames: Game[];
+    initialBattingStats: any[];
+    initialPitchingStats: any[];
 }
 
-export default function TournamentManager({ initialTeams, initialGames }: TournamentManagerProps) {
+export default function TournamentManager({ initialTeams, initialGames, initialBattingStats, initialPitchingStats }: TournamentManagerProps) {
     const [teams, setTeams] = useState<Team[]>(initialTeams);
     const [preliminaryGames, setPreliminaryGames] = useState<Game[]>(initialGames.filter(g => !g.isChampionship));
     const [championshipGame, setChampionshipGame] = useState<Game>(
@@ -201,6 +205,60 @@ export default function TournamentManager({ initialTeams, initialGames }: Tourna
                 markGameForPersistence(gameId);
                 return newGames;
             });
+        }
+    };
+
+    const handleSaveBatting = async (gameId: number, playerId: number, stats: Partial<BattingStat>) => {
+        try {
+            await saveBattingStat({ gameId, playerId, stats });
+
+            // Update local state to show changes immediately
+            const updateGameStats = (game: Game): Game => {
+                const existingStats = game.battingStats || [];
+                const index = existingStats.findIndex(s => s.playerId === playerId);
+                const newBattingStats = [...existingStats];
+                if (index > -1) {
+                    newBattingStats[index] = { ...newBattingStats[index], ...stats };
+                } else {
+                    newBattingStats.push({ gameId, playerId, ...stats } as BattingStat);
+                }
+                return { ...game, battingStats: newBattingStats };
+            };
+
+            if (championshipGame.id === gameId) {
+                setChampionshipGame(prev => updateGameStats(prev));
+            } else {
+                setPreliminaryGames(prev => prev.map(g => g.id === gameId ? updateGameStats(g) : g));
+            }
+        } catch (error) {
+            console.error("Failed to save batting stats", error);
+        }
+    };
+
+    const handleSavePitching = async (gameId: number, playerId: number, stats: Partial<PitchingStat>) => {
+        try {
+            await savePitchingStat({ gameId, playerId, stats });
+
+            // Update local state
+            const updateGameStats = (game: Game): Game => {
+                const existingStats = game.pitchingStats || [];
+                const index = existingStats.findIndex(s => s.playerId === playerId);
+                const newPitchingStats = [...existingStats];
+                if (index > -1) {
+                    newPitchingStats[index] = { ...newPitchingStats[index], ...stats };
+                } else {
+                    newPitchingStats.push({ gameId, playerId, ...stats } as PitchingStat);
+                }
+                return { ...game, pitchingStats: newPitchingStats };
+            };
+
+            if (championshipGame.id === gameId) {
+                setChampionshipGame(prev => updateGameStats(prev));
+            } else {
+                setPreliminaryGames(prev => prev.map(g => g.id === gameId ? updateGameStats(g) : g));
+            }
+        } catch (error) {
+            console.error("Failed to save pitching stats", error);
         }
     };
 
@@ -422,20 +480,10 @@ export default function TournamentManager({ initialTeams, initialGames }: Tourna
                                     <CardTitle>Panel de Líderes</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <Tabs defaultValue="ataque" className="w-full">
-                                        <TabsList className="grid w-full grid-cols-2">
-                                            <TabsTrigger value="ataque">Ataque</TabsTrigger>
-                                            <TabsTrigger value="pitcheo">Pitcheo</TabsTrigger>
-                                        </TabsList>
-                                        <TabsContent value="ataque">
-                                            <p className="text-sm text-muted-foreground mt-4">(min 2.1 PA/G)</p>
-                                            <p className="text-muted-foreground mt-2">Esta sección se encuentra en desarrollo.</p>
-                                        </TabsContent>
-                                        <TabsContent value="pitcheo">
-                                            <p className="text-sm text-muted-foreground mt-4">(min 2.3 IP/G)</p>
-                                            <p className="text-muted-foreground mt-2">Esta sección se encuentra en desarrollo.</p>
-                                        </TabsContent>
-                                    </Tabs>
+                                    <LeaderBoard
+                                        games={[...preliminaryGames, championshipGame]}
+                                        teams={teams}
+                                    />
                                 </CardContent>
                             </Card>
                         </div>
@@ -448,6 +496,8 @@ export default function TournamentManager({ initialTeams, initialGames }: Tourna
                                 teams={teams}
                                 onGameChange={handleGameChange}
                                 onInningChange={handleInningChange}
+                                onSaveBatting={handleSaveBatting}
+                                onSavePitching={handleSavePitching}
                                 onNavigate={handleReturnToTop}
                                 onNavigateToStandings={() => handleScrollTo(standingsRef)}
                             />
@@ -458,6 +508,8 @@ export default function TournamentManager({ initialTeams, initialGames }: Tourna
                             teams={teams}
                             onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, true)}
                             onInningChange={(gameId, inningIndex, teamIndex, value) => handleInningChange(gameId, inningIndex, teamIndex, value, true)}
+                            onSaveBatting={handleSaveBatting}
+                            onSavePitching={handleSavePitching}
                             isChampionship
                         />
                     </div>

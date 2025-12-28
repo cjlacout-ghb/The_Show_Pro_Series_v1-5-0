@@ -26,6 +26,8 @@ model Player {
   placeOfBirth String
   teamId       Int
   team         Team   @relation(fields: [teamId], references: [id])
+  battingStats BattingStat[]
+  pitchingStats PitchingStat[]
 }
 
 model Game {
@@ -50,4 +52,48 @@ model Game {
   // Storing innings as a JSON string since SQLite doesn't support JSON arrays natively
   // format: [["1", "0"], ["0", "2"], ...]
   innings String @default("[]") 
+  
+  battingStats BattingStat[]
+  pitchingStats PitchingStat[]
+}
+
+model BattingStat {
+  id               Int    @id @default(autoincrement())
+  playerId         Int
+  player           Player @relation(fields: [playerId], references: [id])
+  gameId           Int
+  game             Game   @relation(fields: [gameId], references: [id])
+  plateAppearances Int    @default(0)
+  atBats           Int    @default(0)
+  runs             Int    @default(0)
+  hits             Int    @default(0)
+  doubles          Int    @default(0)
+  triples          Int    @default(0)
+  homeRuns         Int    @default(0)
+  rbi              Int    @default(0)
+  walks            Int    @default(0)
+  strikeOuts       Int    @default(0)
+  stolenBases      Int    @default(0)
+
+  @@unique([playerId, gameId])
+}
+
+model PitchingStat {
+  id             Int    @id @default(autoincrement())
+  playerId       Int
+  player         Player @relation(fields: [playerId], references: [id])
+  gameId         Int
+  game           Game   @relation(fields: [gameId], references: [id])
+  inningsPitched Float  @default(0.0) // .1 = 1 out, .2 = 2 outs
+  hits           Int    @default(0)
+  runs           Int    @default(0)
+  earnedRuns     Int    @default(0)
+  walks          Int    @default(0)
+  strikeOuts     Int    @default(0)
+  homeRuns       Int    @default(0)
+  wins           Int    @default(0)
+  losses         Int    @default(0)
+  saves          Int    @default(0)
+
+  @@unique([playerId, gameId])
 }

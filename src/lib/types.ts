@@ -1,3 +1,35 @@
+export type BattingStat = {
+  id?: number;
+  playerId: number;
+  gameId: number;
+  plateAppearances: number;
+  atBats: number;
+  runs: number;
+  hits: number;
+  doubles: number;
+  triples: number;
+  homeRuns: number;
+  rbi: number;
+  walks: number;
+  strikeOuts: number;
+  stolenBases: number;
+};
+
+export type PitchingStat = {
+  id?: number;
+  playerId: number;
+  gameId: number;
+  inningsPitched: number; // using float .1, .2
+  hits: number;
+  runs: number;
+  earnedRuns: number;
+  walks: number;
+  strikeOuts: number;
+  homeRuns: number;
+  wins: number;
+  losses: number;
+  saves: number;
+};
 
 export type Player = {
   id: number;
@@ -5,6 +37,8 @@ export type Player = {
   number: number;
   role: string;
   placeOfBirth: string;
+  battingStats?: BattingStat[];
+  pitchingStats?: PitchingStat[];
 };
 
 export type Team = {
@@ -26,6 +60,9 @@ export type Game = {
   day?: string;
   time?: string;
   innings: (string | number)[][]; // 7 innings, 2 teams
+  isChampionship?: boolean;
+  battingStats?: BattingStat[];
+  pitchingStats?: PitchingStat[];
 };
 
 export type Standing = {
@@ -38,5 +75,3 @@ export type Standing = {
   pct: number;
   gb: number;
 };
-    
-    
