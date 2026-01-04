@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Confetti from "react-confetti";
 import Image from "next/image";
-import { updateGame, saveBattingStat, savePitchingStat } from "@/app/actions";
+import { updateGame, saveBattingStat, savePitchingStat, resetTournamentScores } from "@/app/actions";
 import type { BattingStat, PitchingStat } from "@/lib/types";
 import LeaderBoard from "./LeaderBoard";
 
@@ -25,7 +25,16 @@ interface TournamentManagerProps {
 
 export default function TournamentManager({ initialTeams, initialGames, initialBattingStats, initialPitchingStats }: TournamentManagerProps) {
     const [teams, setTeams] = useState<Team[]>(initialTeams);
-    const [preliminaryGames, setPreliminaryGames] = useState<Game[]>(initialGames.filter(g => !g.isChampionship));
+    const [preliminaryGames, setPreliminaryGames] = useState<Game[]>(
+        initialGames
+            .filter(g => !g.isChampionship)
+            .map(g => ({
+                ...g,
+                innings: g.innings && g.innings.length > 0
+                    ? g.innings
+                    : Array(7).fill(0).map(() => ["", ""])
+            }))
+    );
     const [championshipGame, setChampionshipGame] = useState<Game>(
         initialGames.find(g => g.isChampionship) || {
             id: 999,
@@ -418,6 +427,22 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
         }
     }
 
+    const handleResetTournament = async () => {
+        if (window.confirm("¿Estás seguro de que quieres reiniciar todos los resultados? Esto borrará todos los scores y estadísticas, pero mantendrá los rosters de los equipos.")) {
+            try {
+                const result = await resetTournamentScores();
+                if (result.success) {
+                    toast({ title: "Torneo Reiniciado", description: "Todos los resultados han sido borrados." });
+                    window.location.reload();
+                } else {
+                    toast({ variant: "destructive", title: "Error", description: "No se pudo reiniciar el torneo." });
+                }
+            } catch (error) {
+                toast({ variant: "destructive", title: "Error", description: "Ocurrió un error inesperado." });
+            }
+        }
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             {showConfetti && <Confetti recycle={false} numberOfPieces={500} width={confettiSize.width} height={confettiSize.height} style={{ position: 'absolute', top: confettiSize.top, left: confettiSize.left }} />}
@@ -517,7 +542,17 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
             </main>
             <footer className="py-6 flex flex-col items-center justify-center gap-4 text-center text-sm text-muted-foreground">
                 <Image src="/images/sponsor-logo.png" alt="Sponsor Logo" width={200} height={100} />
-                <p>copyright: Cristian Lacout | Hecho por amor al juego</p>
+                <div className="flex flex-col items-center gap-2">
+                    <p>copyright: Cristian Lacout | Hecho por amor al juego</p>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[10px] text-muted-foreground/30 hover:text-destructive transition-colors"
+                        onClick={handleResetTournament}
+                    >
+                        Reiniciar Resultados del Torneo
+                    </Button>
+                </div>
             </footer>
         </div>
     );

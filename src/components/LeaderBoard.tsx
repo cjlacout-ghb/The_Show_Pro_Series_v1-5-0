@@ -199,7 +199,7 @@ export default function LeaderBoard({ games, teams }: LeaderBoardProps) {
             <TabsContent value="pitcheo" className="mt-4">
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-lg">TOP LANZADORES</h3>
-                    <span className="text-xs text-muted-foreground">(min 2.3 IP/G)</span>
+                    <span className="text-xs text-muted-foreground">(min 2.1 IP/G)</span>
                 </div>
                 <Table>
                     <TableHeader>

@@ -103,29 +103,87 @@ export default function ScheduleCard({
 
                   <div className={cn(
                     "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
-                    team1Wins && "text-primary font-bold border border-primary"
+                    team1Wins && "text-primary font-bold border-2 border-primary"
                   )}>
                     {getTeamPlaceholder(game, 1)}
                   </div>
-                  <Input type="number" readOnly value={game.score1} className={cn("font-bold text-lg text-center p-0", team1Wins && "text-primary border-primary")} placeholder="R" />
-                  <Input type="number" value={game.hits1} onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)} className="text-center p-0" placeholder="H" />
-                  <Input type="number" value={game.errors1} onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)} className="text-center p-0" placeholder="E" />
+
+                  {/* Visiting Team Score (R) */}
+                  <div className={cn(
+                    "flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent text-lg font-bold text-center",
+                    team1Wins && "text-primary border-2 border-primary"
+                  )}>
+                    <span className="leading-none">{game.score1}</span>
+                  </div>
+
+                  {/* Visiting Team Hits (H) */}
+                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={game.hits1}
+                      onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)}
+                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
+                      placeholder="H"
+                    />
+                  </div>
+
+                  {/* Visiting Team Errors (E) */}
+                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={game.errors1}
+                      onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)}
+                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
+                      placeholder="E"
+                    />
+                  </div>
 
                   <div className={cn(
                     "p-2 text-sm rounded-md bg-muted min-h-[40px] flex items-center justify-center text-center",
-                    team2Wins && "text-primary font-bold border border-primary"
+                    team2Wins && "text-primary font-bold border-2 border-primary"
                   )}>
                     {getTeamPlaceholder(game, 2)}
                   </div>
-                  <Input type="number" readOnly value={game.score2} className={cn("font-bold text-lg text-center p-0", team2Wins && "text-primary border-primary")} placeholder="R" />
-                  <Input type="number" value={game.hits2} onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)} className="text-center p-0" placeholder="H" />
-                  <Input type="number" value={game.errors2} onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)} className="text-center p-0" placeholder="E" />
+
+                  {/* Local Team Score (R) */}
+                  <div className={cn(
+                    "flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent text-lg font-bold text-center",
+                    team2Wins && "text-primary border-2 border-primary"
+                  )}>
+                    <span className="leading-none">{game.score2}</span>
+                  </div>
+
+                  {/* Local Team Hits (H) */}
+                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={game.hits2}
+                      onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)}
+                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
+                      placeholder="H"
+                    />
+                  </div>
+
+                  {/* Local Team Errors (E) */}
+                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={game.errors2}
+                      onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)}
+                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
+                      placeholder="E"
+                    />
+                  </div>
                 </div>
 
                 <Separator />
 
                 {/* Inning-by-inning scores */}
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto p-2">
                   <div className="grid grid-cols-[3rem_repeat(12,minmax(2rem,1fr))] gap-2 items-center text-xs text-center font-semibold text-muted-foreground mb-2" style={{ minWidth: `${3 + inningsCount * 2.5}rem` }}>
                     <div>&nbsp;</div>
                     {Array.from({ length: inningsCount }, (_, i) => i + 1).map(inning => <div key={inning}>{inning}</div>)}
