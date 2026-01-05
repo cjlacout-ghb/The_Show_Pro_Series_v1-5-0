@@ -6,11 +6,11 @@
     "dev": "next dev --turbopack",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
-    "build": "prisma generate && NODE_ENV=production next build",
+    "build": "DATABASE_URL=file:./prisma/dev.db prisma generate && DATABASE_URL=file:./prisma/dev.db next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "postinstall": "prisma generate"
+    "postinstall": "DATABASE_URL=file:./prisma/dev.db prisma generate"
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
