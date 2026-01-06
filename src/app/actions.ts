@@ -1,35 +1,47 @@
 'use server'
 
-import { prisma } from '@/lib/db'
+import { supabase } from '@/lib/supabase'
 import { revalidatePath } from 'next/cache'
 
 export async function getTeams() {
-    const teams = await prisma.team.findMany({
-        include: {
-            players: true,
-        },
-    })
-    return teams
+    const { data: teams, error } = await supabase
+        .from('teams')
+        .select(`
+            *,
+            players (*)
+        `)
+        .order('id')
+
+    if (error) {
+        console.error('Error fetching teams:', error)
+        return []
+    }
+
+    // Map snake_case to camelCase for the UI
+    return teams.map(team => ({
+        ...team,
+        players: team.players.map((p: any) => ({
+            ...p,
+            placeOfBirth: p.place_of_birth
+        }))
+    }))
 }
 
 export async function getGames() {
-    const games = await prisma.game.findMany({
-        orderBy: {
-            id: 'asc',
-        },
-        include: {
-            battingStats: true,
-            pitchingStats: true,
-        }
-    })
+    const { data: games, error } = await supabase
+        .from('games')
+        .select('*')
+        .order('id')
 
-    // Parse innings from JSON string back to array
+    if (error) {
+        console.error('Error fetching games:', error)
+        return []
+    }
+
     return games.map(game => ({
         ...game,
-        innings: JSON.parse(game.innings),
-        // Ensure numeric fields are numbers if they came out as null/string (safety)
-        team1Id: String(game.team1Id),
-        team2Id: String(game.team2Id),
+        team1Id: String(game.team1_id),
+        team2Id: String(game.team2_id),
         score1: game.score1?.toString() ?? "",
         score2: game.score2?.toString() ?? "",
         hits1: game.hits1?.toString() ?? "",
@@ -42,202 +54,191 @@ export async function getGames() {
 export async function saveBattingStat(data: { playerId: number, gameId: number, stats: any }) {
     const { playerId, gameId, stats } = data;
 
-    await prisma.battingStat.upsert({
-        where: {
-            playerId_gameId: {
-                playerId,
-                gameId
-            }
-        },
-        update: stats,
-        create: {
-            playerId,
-            gameId,
-            ...stats
-        }
-    });
+    const { error } = await supabase
+        .from('batting_stats')
+        .upsert({
+            player_id: playerId,
+            game_id: gameId,
+            stats: stats,
+            updated_at: new Date().toISOString()
+        })
 
+    if (error) console.error('Error saving batting stat:', error)
     revalidatePath('/');
 }
 
 export async function savePitchingStat(data: { playerId: number, gameId: number, stats: any }) {
     const { playerId, gameId, stats } = data;
 
-    await prisma.pitchingStat.upsert({
-        where: {
-            playerId_gameId: {
-                playerId,
-                gameId
-            }
-        },
-        update: stats,
-        create: {
-            playerId,
-            gameId,
-            ...stats
-        }
-    });
+    const { error } = await supabase
+        .from('pitching_stats')
+        .upsert({
+            player_id: playerId,
+            game_id: gameId,
+            stats: stats,
+            updated_at: new Date().toISOString()
+        })
 
+    if (error) console.error('Error saving pitching stat:', error)
     revalidatePath('/');
 }
 
 export async function getAllStats() {
-    const battingStats = await prisma.battingStat.findMany({
-        include: {
-            player: {
-                include: {
-                    team: true
-                }
-            }
-        }
-    });
+    const { data: bStats, error: bError } = await supabase
+        .from('batting_stats')
+        .select(`
+            *,
+            player:players (
+                *,
+                team:teams (*)
+            )
+        `)
 
-    const pitchingStats = await prisma.pitchingStat.findMany({
-        include: {
-            player: {
-                include: {
-                    team: true
-                }
-            }
-        }
-    });
+    const { data: pStats, error: pError } = await supabase
+        .from('pitching_stats')
+        .select(`
+            *,
+            player:players (
+                *,
+                team:teams (*)
+            )
+        `)
 
-    return { battingStats, pitchingStats };
+    if (bError || pError) console.error('Error fetching all stats:', bError || pError)
+
+    // Map structure to match frontend expectations
+    const mapStat = (stat: any) => ({
+        ...stat,
+        playerId: stat.player_id,
+        gameId: stat.game_id,
+        player: {
+            ...stat.player,
+            placeOfBirth: stat.player.place_of_birth,
+            team: stat.player.team
+        }
+    })
+
+    return {
+        battingStats: (bStats || []).map(mapStat),
+        pitchingStats: (pStats || []).map(mapStat)
+    };
 }
 
 export async function updateGame(gameId: number, data: any) {
-    // data contains the fields to update
-    // We need to be careful with types. 
-    // expected data: { score1, score2, innings (array), etc }
-
     const updateData: any = {}
-
     if (data.score1 !== undefined) updateData.score1 = parseInt(data.score1) || 0
     if (data.score2 !== undefined) updateData.score2 = parseInt(data.score2) || 0
     if (data.hits1 !== undefined) updateData.hits1 = parseInt(data.hits1) || 0
     if (data.hits2 !== undefined) updateData.hits2 = parseInt(data.hits2) || 0
     if (data.errors1 !== undefined) updateData.errors1 = parseInt(data.errors1) || 0
     if (data.errors2 !== undefined) updateData.errors2 = parseInt(data.errors2) || 0
+    if (data.innings) updateData.innings = data.innings
+    if (data.team1Id) updateData.team1_id = parseInt(data.team1Id)
+    if (data.team2Id) updateData.team2_id = parseInt(data.team2Id)
 
-    if (data.innings) {
-        updateData.innings = JSON.stringify(data.innings)
-    }
+    const { error } = await supabase
+        .from('games')
+        .update(updateData)
+        .eq('id', gameId)
 
-    // also handle team IDs if they change (unlikely for scheduled games but possible for championship)
-    if (data.team1Id) updateData.team1Id = parseInt(data.team1Id)
-    if (data.team2Id) updateData.team2Id = parseInt(data.team2Id)
-
-    await prisma.game.update({
-        where: { id: gameId },
-        data: updateData,
-    })
-
+    if (error) console.error('Error updating game:', error)
     revalidatePath('/')
 }
 
 export async function importPlayers(teamId: number, csvData: string) {
     console.log(`Starting import for team ${teamId}, string length: ${csvData.length}`);
     const lines = csvData.trim().split('\n');
-    let importedCount = 0;
-
-    // Clear existing players for this team to avoid duplicates/conflicts? 
-    // For now, let's keep appending, but we might hit unique constraints if refactoring.
-    // The user request implies simple import.
+    const playersToInsert: any[] = [];
 
     for (const line of lines) {
         const trimmedLine = line.trim();
-        // Skip header lines or empty lines
-        if (!trimmedLine || trimmedLine.includes('UNIFORME N') || trimmedLine.toUpperCase().startsWith('TEAM')) {
-            console.log("Skipping header/empty line:", trimmedLine);
-            continue;
-        }
+        if (!trimmedLine || trimmedLine.includes('UNIFORME N') || trimmedLine.toUpperCase().startsWith('TEAM')) continue;
 
-        // Try comma split first
         let parts = trimmedLine.split(',').map(p => p.trim());
+        if (parts.length < 3) parts = trimmedLine.split('\t').map(p => p.trim());
 
-        // If not enough parts, try tab split (common from Excel copy-paste)
-        if (parts.length < 3) {
-            parts = trimmedLine.split('\t').map(p => p.trim());
-        }
-
-        console.log(`Processing line: "${trimmedLine}" -> Parts found: ${parts.length}`);
-
-        if (parts.length >= 2) { // Allow at least Number + Name
+        if (parts.length >= 2) {
             const number = parseInt(parts[0]) || 0;
-
-            // Flexible parsing based on length
-            // Format: NUMBER, LASTNAME, FIRSTNAME, POSITION, COUNTRY
             let fullName = "";
             let role = "UNKNOWN";
             let placeOfBirth = "UNKNOWN";
 
             if (parts.length >= 3) {
-                // Has First and Last Name separated
                 const lastName = parts[1] || "";
                 const firstName = parts[2] || "";
                 fullName = `${firstName} ${lastName}`.trim();
-
                 if (parts.length > 3) role = parts[3];
                 if (parts.length > 4) placeOfBirth = parts[4];
             } else {
-                // Just Number and Name combined? Or just one name field?
                 fullName = parts[1];
             }
 
-            try {
-                await prisma.player.create({
-                    data: {
-                        teamId: teamId,
-                        number: number,
-                        name: fullName,
-                        role: role,
-                        placeOfBirth: placeOfBirth
-                    }
-                });
-                importedCount++;
-            } catch (e) {
-                console.error(`Failed to create player ${fullName}:`, e);
-            }
+            playersToInsert.push({
+                id: Math.floor(Math.random() * 100000000), // Larger random ID to avoid collisions
+                team_id: teamId,
+                number: number,
+                name: fullName,
+                role: role,
+                place_of_birth: placeOfBirth
+            });
         }
     }
 
-    console.log(`Import finished. Total imported: ${importedCount}`);
-    revalidatePath('/');
-    return { success: true, count: importedCount };
+    if (playersToInsert.length > 0) {
+        const { error, count } = await supabase.from('players').insert(playersToInsert)
+        if (error) {
+            console.error('Error importing players:', error)
+            return { success: false, error: error.message }
+        }
+        revalidatePath('/');
+        return { success: true, count: playersToInsert.length };
+    }
+
+    return { success: true, count: 0 };
 }
 
 export async function updatePlayer(playerId: number, data: { number?: number, name?: string, role?: string, placeOfBirth?: string }) {
-    await prisma.player.update({
-        where: { id: playerId },
-        data: data
-    });
+    const updateData: any = { ...data }
+    if (data.placeOfBirth) {
+        updateData.place_of_birth = data.placeOfBirth
+        delete updateData.placeOfBirth
+    }
+
+    const { error } = await supabase
+        .from('players')
+        .update(updateData)
+        .eq('id', playerId)
+
+    if (error) {
+        console.error('Error updating player:', error)
+        return { success: false }
+    }
     revalidatePath('/');
     return { success: true };
 }
 
 export async function resetTournamentScores() {
-    try {
-        // 1. Delete all batting and pitching stats
-        await prisma.battingStat.deleteMany({});
-        await prisma.pitchingStat.deleteMany({});
+    // 1. Delete all stats
+    await supabase.from('batting_stats').delete().neq('player_id', 0) // delete all
+    await supabase.from('pitching_stats').delete().neq('player_id', 0)
 
-        // 2. Reset all games to initial state
-        await prisma.game.updateMany({
-            data: {
-                score1: null,
-                score2: null,
-                hits1: null,
-                hits2: null,
-                errors1: null,
-                errors2: null,
-                innings: "[]"
-            }
-        });
+    // 2. Reset games
+    const { error } = await supabase
+        .from('games')
+        .update({
+            score1: null,
+            score2: null,
+            hits1: null,
+            hits2: null,
+            errors1: null,
+            errors2: null,
+            innings: []
+        })
+        .neq('id', 0) // update all
 
-        revalidatePath('/');
-        return { success: true };
-    } catch (error) {
-        console.error("Failed to reset tournament scores:", error);
-        return { success: false, error: "Failed to reset scores" };
-    }
+    if (error) console.error('Error resetting scores:', error)
+    revalidatePath('/');
+    return { success: true };
 }
+
+
