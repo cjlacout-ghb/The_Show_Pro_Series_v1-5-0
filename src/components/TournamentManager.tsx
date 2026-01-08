@@ -37,7 +37,7 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
     );
     const [championshipGame, setChampionshipGame] = useState<Game>(
         initialGames.find(g => g.isChampionship) || {
-            id: 999,
+            id: 16,
             team1Id: "",
             score1: "",
             hits1: "",

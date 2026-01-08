@@ -48,6 +48,7 @@ export async function getGames() {
         hits2: game.hits2?.toString() ?? "",
         errors1: game.errors1?.toString() ?? "",
         errors2: game.errors2?.toString() ?? "",
+        isChampionship: game.id === 16
     }))
 }
 
