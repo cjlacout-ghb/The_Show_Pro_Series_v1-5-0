@@ -117,26 +117,24 @@ export default function ScheduleCard({
                   </div>
 
                   {/* Visiting Team Hits (H) */}
-                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
-                    <input
+                  <div className="flex items-center justify-center h-10 w-full">
+                    <Input
                       type="text"
                       inputMode="numeric"
                       value={game.hits1}
                       onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)}
-                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
-                      placeholder="H"
+                      className="text-center h-10"
                     />
                   </div>
 
                   {/* Visiting Team Errors (E) */}
-                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
-                    <input
+                  <div className="flex items-center justify-center h-10 w-full">
+                    <Input
                       type="text"
                       inputMode="numeric"
                       value={game.errors1}
                       onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)}
-                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
-                      placeholder="E"
+                      className="text-center h-10"
                     />
                   </div>
 
@@ -156,26 +154,24 @@ export default function ScheduleCard({
                   </div>
 
                   {/* Local Team Hits (H) */}
-                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
-                    <input
+                  <div className="flex items-center justify-center h-10 w-full">
+                    <Input
                       type="text"
                       inputMode="numeric"
                       value={game.hits2}
                       onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)}
-                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
-                      placeholder="H"
+                      className="text-center h-10"
                     />
                   </div>
 
                   {/* Local Team Errors (E) */}
-                  <div className="flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent">
-                    <input
+                  <div className="flex items-center justify-center h-10 w-full">
+                    <Input
                       type="text"
                       inputMode="numeric"
                       value={game.errors2}
                       onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)}
-                      className="w-full bg-transparent text-center border-none focus:outline-none p-0 leading-none"
-                      placeholder="E"
+                      className="text-center h-10"
                     />
                   </div>
                 </div>

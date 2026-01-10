@@ -103,7 +103,7 @@ export default function LeaderBoard({ games, teams }: LeaderBoardProps) {
     const getBattingLeaders = (limit = 10) => {
         return Object.values(playerStats)
             .filter(ps => {
-                const teamGames = teamGamesPlayed[ps.player.teamId] || 0;
+                const teamGames = teamGamesPlayed[ps.player.teamId as keyof typeof teamGamesPlayed] || 0;
                 // Only qualify if team has played at least one game and player meets PA requirement
                 return teamGames > 0 && (ps.batting.plateAppearances || 0) >= teamGames * 2.1;
             })
@@ -126,7 +126,7 @@ export default function LeaderBoard({ games, teams }: LeaderBoardProps) {
     const getPitchingLeaders = (limit = 10) => {
         return Object.values(playerStats)
             .filter(ps => {
-                const teamGames = teamGamesPlayed[ps.player.teamId] || 0;
+                const teamGames = teamGamesPlayed[ps.player.teamId as keyof typeof teamGamesPlayed] || 0;
                 const ip = ps.pitching.inningsPitched || 0;
                 const totalOuts = Math.floor(ip) * 3 + Math.round((ip % 1) * 10);
                 return teamGames > 0 && (totalOuts / 3) >= teamGames * 2.3;

@@ -223,8 +223,8 @@ export async function resetTournamentScores() {
     await supabase.from('batting_stats').delete().neq('player_id', 0) // delete all
     await supabase.from('pitching_stats').delete().neq('player_id', 0)
 
-    // 2. Reset games
-    const { error } = await supabase
+    // 2. Reset games scores and innings for all
+    const { error: error1 } = await supabase
         .from('games')
         .update({
             score1: null,
@@ -235,7 +235,18 @@ export async function resetTournamentScores() {
             errors2: null,
             innings: []
         })
-        .neq('id', 0) // update all
+        .neq('id', 0)
+
+    // 3. Reset team IDs ONLY for the championship game (so it starts empty)
+    const { error: error2 } = await supabase
+        .from('games')
+        .update({
+            team1_id: null,
+            team2_id: null
+        })
+        .eq('id', 16)
+
+    const error = error1 || error2;
 
     if (error) console.error('Error resetting scores:', error)
     revalidatePath('/');

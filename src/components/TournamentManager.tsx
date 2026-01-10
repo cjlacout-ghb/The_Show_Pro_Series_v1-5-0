@@ -8,7 +8,7 @@ import ScheduleCard from "@/components/schedule-card";
 import StandingsTable from "@/components/standings-table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Confetti from "react-confetti";
 import Image from "next/image";
@@ -510,6 +510,11 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
                                         teams={teams}
                                     />
                                 </CardContent>
+                                <CardFooter className="flex justify-end w-full">
+                                    <Button size="sm" variant="secondary" onClick={handleReturnToTop}>
+                                        Ir al inicio
+                                    </Button>
+                                </CardFooter>
                             </Card>
                         </div>
                     </div>
