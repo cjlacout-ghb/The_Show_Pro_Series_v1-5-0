@@ -17,6 +17,7 @@ import { Fragment } from "react";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
+import { ArrowUpDown } from "lucide-react";
 
 type ScheduleCardProps = {
   title: string;
@@ -26,6 +27,7 @@ type ScheduleCardProps = {
   onInningChange: (gameId: number, inningIndex: number, teamIndex: 0 | 1, value: string) => void;
   onSaveBatting: (gameId: number, playerId: number, stats: Partial<BattingStat>) => Promise<void>;
   onSavePitching: (gameId: number, playerId: number, stats: Partial<PitchingStat>) => Promise<void>;
+  onSwapTeams: (gameId: number) => void;
   onNavigate?: () => void;
   onNavigateToStandings?: () => void;
   footer?: React.ReactNode;
@@ -40,6 +42,7 @@ export default function ScheduleCard({
   onInningChange,
   onSaveBatting,
   onSavePitching,
+  onSwapTeams,
   onNavigate,
   onNavigateToStandings,
   footer,
@@ -53,13 +56,18 @@ export default function ScheduleCard({
 
   const getTeamPlaceholder = (game: Game, teamNumber: 1 | 2) => {
     const teamId = teamNumber === 1 ? game.team1Id : game.team2Id;
+    const teamName = teamId ? getTeamName(teamId) : "";
+
     if (!isChampionship) {
-      return getTeamName(teamId);
+      return teamName;
     }
-    if (game.team1Id && game.team2Id) {
-      return getTeamName(teamId);
+
+    const label = teamNumber === 1 ? "SEGUNDO RONDA INICIAL" : "PRIMERO RONDA INICIAL";
+
+    if (teamName) {
+      return `${label}: ${teamName}`;
     }
-    return teamNumber === 1 ? "2° RONDA INICIAL" : "1° RONDA INICIAL";
+    return label;
   }
 
   return (
@@ -84,6 +92,9 @@ export default function ScheduleCard({
           const team1Wins = score1Num > score2Num;
           const team2Wins = score2Num > score1Num;
 
+          const hasInnings = game.innings.some((inn: any) => inn[0] !== "" || inn[1] !== "");
+          const renderValue = (val: string) => (val === "0" && !hasInnings) ? "" : val;
+
           return (
             <Fragment key={game.id}>
               {showDay && <h3 className="font-bold text-lg pt-4">{game.day}</h3>}
@@ -96,7 +107,18 @@ export default function ScheduleCard({
                 </div>
 
                 <div className="grid grid-cols-[1fr_2.5rem_2.5rem_2.5rem] gap-x-2 gap-y-2 items-center">
-                  <div className="font-semibold">EQUIPO</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">EQUIPOS</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 text-muted-foreground hover:text-primary"
+                      onClick={() => onSwapTeams(game.id)}
+                      title="Intercambiar Loc/Vis"
+                    >
+                      <ArrowUpDown className="h-3 w-3" />
+                    </Button>
+                  </div>
                   <div className="text-center font-semibold">R</div>
                   <div className="text-center font-semibold">H</div>
                   <div className="text-center font-semibold">E</div>
@@ -110,10 +132,10 @@ export default function ScheduleCard({
 
                   {/* Visiting Team Score (R) */}
                   <div className={cn(
-                    "flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent text-lg font-bold text-center",
+                    "flex items-center justify-center h-10 w-full rounded-md border border-input bg-background text-lg font-bold text-center",
                     team1Wins && "text-primary border-2 border-primary"
                   )}>
-                    <span className="leading-none">{game.score1}</span>
+                    <span className="leading-none">{renderValue(game.score1)}</span>
                   </div>
 
                   {/* Visiting Team Hits (H) */}
@@ -121,7 +143,7 @@ export default function ScheduleCard({
                     <Input
                       type="text"
                       inputMode="numeric"
-                      value={game.hits1}
+                      value={renderValue(game.hits1)}
                       onChange={(e) => onGameChange(game.id, 'hits1', e.target.value)}
                       className="text-center h-10"
                     />
@@ -132,7 +154,7 @@ export default function ScheduleCard({
                     <Input
                       type="text"
                       inputMode="numeric"
-                      value={game.errors1}
+                      value={renderValue(game.errors1)}
                       onChange={(e) => onGameChange(game.id, 'errors1', e.target.value)}
                       className="text-center h-10"
                     />
@@ -147,10 +169,10 @@ export default function ScheduleCard({
 
                   {/* Local Team Score (R) */}
                   <div className={cn(
-                    "flex items-center justify-center h-10 w-full rounded-md border border-input bg-transparent text-lg font-bold text-center",
+                    "flex items-center justify-center h-10 w-full rounded-md border border-input bg-background text-lg font-bold text-center",
                     team2Wins && "text-primary border-2 border-primary"
                   )}>
-                    <span className="leading-none">{game.score2}</span>
+                    <span className="leading-none">{renderValue(game.score2)}</span>
                   </div>
 
                   {/* Local Team Hits (H) */}
@@ -158,7 +180,7 @@ export default function ScheduleCard({
                     <Input
                       type="text"
                       inputMode="numeric"
-                      value={game.hits2}
+                      value={renderValue(game.hits2)}
                       onChange={(e) => onGameChange(game.id, 'hits2', e.target.value)}
                       className="text-center h-10"
                     />
@@ -169,7 +191,7 @@ export default function ScheduleCard({
                     <Input
                       type="text"
                       inputMode="numeric"
-                      value={game.errors2}
+                      value={renderValue(game.errors2)}
                       onChange={(e) => onGameChange(game.id, 'errors2', e.target.value)}
                       className="text-center h-10"
                     />
@@ -222,7 +244,7 @@ export default function ScheduleCard({
                     onSavePitching={(playerId, stats) => onSavePitching(game.id, playerId, stats)}
                   />
                   <div className="flex gap-2">
-                    {onNavigateToStandings && !isChampionship && (
+                    {onNavigateToStandings && (
                       <Button size="sm" variant="secondary" onClick={onNavigateToStandings}>
                         Ir a posiciones
                       </Button>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft } from "lucide-react";
 import Confetti from "react-confetti";
 import Image from "next/image";
 import { updateGame, saveBattingStat, savePitchingStat, resetTournamentScores } from "@/app/actions";
@@ -35,8 +36,17 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
                     : Array(7).fill(0).map(() => ["", ""])
             }))
     );
-    const [championshipGame, setChampionshipGame] = useState<Game>(
-        initialGames.find(g => g.isChampionship) || {
+    const [championshipGame, setChampionshipGame] = useState<Game>(() => {
+        const found = initialGames.find(g => g.isChampionship);
+        if (found) {
+            return {
+                ...found,
+                innings: found.innings && found.innings.length > 0
+                    ? found.innings
+                    : Array(7).fill(0).map(() => ["", ""])
+            };
+        }
+        return {
             id: 16,
             team1Id: "",
             score1: "",
@@ -50,13 +60,14 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
             time: "21:00",
             innings: Array(7).fill(0).map(() => ["", ""]),
             isChampionship: true
-        }
-    );
+        };
+    });
 
     const [champion, setChampion] = useState<string | null>(null);
     const [standings, setStandings] = useState<Standing[]>([]);
     const [showConfetti, setShowConfetti] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | undefined>(undefined);
+    const [currentView, setCurrentView] = useState<'menu' | 'teams' | 'games' | 'standings' | 'leaders'>('menu');
 
     const mainRef = useRef<HTMLDivElement>(null);
     const teamRosterRef = useRef<HTMLDivElement>(null);
@@ -80,7 +91,8 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
 
     const handleReturnToTop = () => {
         setOpenAccordion(undefined);
-        handleScrollTo(mainRef);
+        setCurrentView('menu');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     // Debounced persist function that runs outside of render
@@ -271,6 +283,36 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
         }
     };
 
+    const handleSwapTeams = (gameId: number) => {
+        const swap = (game: Game): Game => ({
+            ...game,
+            team1Id: game.team2Id,
+            team2Id: game.team1Id,
+            score1: game.score2,
+            score2: game.score1,
+            hits1: game.hits2,
+            hits2: game.hits1,
+            errors1: game.errors2,
+            errors2: game.errors1,
+            innings: game.innings.map(inn => [inn[1], inn[0]])
+        });
+
+        if (championshipGame.id === gameId) {
+            setChampionshipGame(prev => {
+                const updated = swap(prev);
+                markGameForPersistence(gameId);
+                return updated;
+            });
+        } else {
+            setPreliminaryGames(prev => {
+                const updated = prev.map(g => g.id === gameId ? swap(g) : g);
+                markGameForPersistence(gameId);
+                setTimeout(() => calculateStandings(updated), 0);
+                return updated;
+            });
+        }
+    };
+
     const calculateStandings = useCallback((gamesToProcess: Game[]) => {
         const newStandings: Omit<Standing, "pos" | "gb">[] = teams.map(team => ({
             teamId: team.id,
@@ -370,7 +412,7 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
 
         setStandings(finalStandingsWithRank);
 
-        if (finalStandingsWithRank.length > 1 && finalStandingsWithRank.every(s => s.w + s.l === 5)) {
+        if (finalStandingsWithRank.length > 1) {
             setChampionshipGame(prev => {
                 const newChampGame = {
                     ...prev,
@@ -428,17 +470,42 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
     }
 
     const handleResetTournament = async () => {
-        if (window.confirm("¿Estás seguro de que quieres reiniciar todos los resultados? Esto borrará todos los scores y estadísticas, pero mantendrá los rosters de los equipos.")) {
+        if (window.confirm("¿Estás seguro de que quieres reiniciar el torneo? Esto borrará todos los resultados y estadísticas, manteniendo los equipos.")) {
             try {
+                // 1. Prevent any further auto-saves
+                if (persistTimeoutRef.current) {
+                    clearTimeout(persistTimeoutRef.current);
+                }
+                gamesToPersist.current.clear();
+
+                // 2. Optimistically clear local state to show "zero" immediately
+                setPreliminaryGames(prev => prev.map(g => ({
+                    ...g,
+                    score1: "", score2: "", hits1: "", hits2: "", errors1: "", errors2: "",
+                    innings: Array(7).fill(0).map(() => ["", ""])
+                })));
+                setChampionshipGame(prev => ({
+                    ...prev,
+                    team1Id: "", team2Id: "",
+                    score1: "", score2: "", hits1: "", hits2: "", errors1: "", errors2: "",
+                    innings: Array(7).fill(0).map(() => ["", ""])
+                }));
+                setChampion(null);
+                setShowConfetti(false);
+
+                // 3. Call server action
                 const result = await resetTournamentScores();
+
                 if (result.success) {
-                    toast({ title: "Torneo Reiniciado", description: "Todos los resultados han sido borrados." });
-                    window.location.reload();
+                    toast({ title: "Torneo Reiniciado", description: "La base de datos se ha limpiado correctamente." });
+                    // 4. Force a hard reload with a cache-buster to ensure the server component re-fetches
+                    window.location.href = '/?t=' + Date.now();
                 } else {
-                    toast({ variant: "destructive", title: "Error", description: "No se pudo reiniciar el torneo." });
+                    toast({ variant: "destructive", title: "Error", description: "Hubo un problema al limpiar la base de datos." });
                 }
             } catch (error) {
-                toast({ variant: "destructive", title: "Error", description: "Ocurrió un error inesperado." });
+                console.error("Reset error:", error);
+                toast({ variant: "destructive", title: "Error", description: "Error inesperado al reiniciar." });
             }
         }
     };
@@ -447,118 +514,182 @@ export default function TournamentManager({ initialTeams, initialGames, initialB
         <div className="flex flex-col min-h-screen bg-background text-foreground">
             {showConfetti && <Confetti recycle={false} numberOfPieces={500} width={confettiSize.width} height={confettiSize.height} style={{ position: 'absolute', top: confettiSize.top, left: confettiSize.left }} />}
             <main ref={mainRef} className="flex-1 container mx-auto p-4 md:p-8">
-                <header className="mb-10 flex items-center justify-start gap-8">
-                    <Image src="/images/logo.png" alt="The Show Pro Series Logo" width={180} height={180} />
-                    <div className="text-left">
-                        <h1 className="text-4xl md:text-5xl font-black tracking-widest text-primary">THE SHOW PRO SERIES</h1>
-                        <h2 className="text-2xl md:text-4xl font-bold mt-2">
-                            TORNEO INTERNACIONAL<br />DE SOFTBOL MASCULINO
-                        </h2>
-                        <p className="text-md md:text-xl text-muted-foreground mt-2">Paraná, ER - Argentina</p>
-                        <p className="text-sm md:text-lg text-muted-foreground">Marzo, 2026</p>
-                    </div>
-                </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-                    <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground justify-center" onClick={() => handleScrollTo(teamRosterRef)}>
-                        Equipos y Jugadores
-                    </Button>
-                    <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground justify-center" onClick={() => handleScrollTo(scheduleRef)}>
-                        Partidos y Resultados
-                    </Button>
-                    <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground justify-center" onClick={() => handleScrollTo(standingsRef)}>
-                        Tabla de Posiciones
-                    </Button>
-                    <Button size="lg" variant="default" className="bg-primary hover:bg-primary/90 text-primary-foreground justify-center" onClick={() => handleScrollTo(statisticsRef)}>
-                        Panel de Líderes
-                    </Button>
-                </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-                    <div className="xl:col-span-2 space-y-8">
-                        <div ref={teamRosterRef}>
-                            <TeamSetup teams={teams} openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} onNavigate={handleReturnToTop} />
+                {currentView === 'menu' && (
+                    <header className="mb-24 flex flex-col md:flex-row items-center justify-start gap-12">
+                        <Image src="/images/logo.png" alt="The Show Pro Series Logo" width={240} height={240} className="w-auto h-44 md:h-60" priority />
+                        <div className="text-center md:text-left">
+                            <h1 className="text-4xl md:text-[5.5rem] font-black tracking-widest text-primary leading-none">THE SHOW PRO SERIES</h1>
+                            <h2 className="text-2xl md:text-5xl font-bold mt-2 uppercase">
+                                TORNEO INTERNACIONAL<br />DE SOFTBOL MASCULINO
+                            </h2>
+                            <div className="mt-6 space-y-1">
+                                <p className="text-lg md:text-2xl text-muted-foreground font-medium">Paraná, ER - Argentina</p>
+                                <p className="text-base md:text-xl text-muted-foreground/80">Marzo, 2026</p>
+                            </div>
                         </div>
-                        <div ref={standingsRef}>
-                            <StandingsTable
-                                teams={teams}
-                                standings={standings}
-                                onNavigate={handleReturnToTop}
-                            />
+                    </header>
+                )}
+
+                {currentView === 'menu' ? (
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+                            <Button
+                                size="lg"
+                                className="h-16 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all hover:scale-105"
+                                onClick={() => setCurrentView('teams')}
+                            >
+                                Equipos y Jugadores
+                            </Button>
+                            <Button
+                                size="lg"
+                                className="h-16 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all hover:scale-105"
+                                onClick={() => setCurrentView('games')}
+                            >
+                                Partidos y Resultados
+                            </Button>
+                            <Button
+                                size="lg"
+                                className="h-16 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all hover:scale-105"
+                                onClick={() => setCurrentView('standings')}
+                            >
+                                Tabla de Posiciones
+                            </Button>
+                            <Button
+                                size="lg"
+                                className="h-16 text-lg font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all hover:scale-105"
+                                onClick={() => setCurrentView('leaders')}
+                            >
+                                Panel de Líderes
+                            </Button>
                         </div>
-                        {champion && (
-                            <div ref={championCardRef}>
-                                <Card className="bg-card border-primary ring-2 ring-primary shadow-lg animate-in fade-in-50">
-                                    <CardHeader className="items-center text-center">
-                                        <TrophyIcon className="w-16 h-16 text-primary" />
-                                        <CardTitle className="text-2xl text-primary">¡Equipo Campeón!</CardTitle>
+                        <div className="w-full h-0.5 bg-primary/25 mx-auto mt-24" />
+                    </>
+                ) : (
+                    <div className="space-y-6">
+                        <div className="flex justify-start mb-6">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentView('menu')}
+                                className="gap-2 border-primary/20 hover:bg-primary/10"
+                            >
+                                <ArrowLeft className="w-4 h-4" />
+                                Volver al Menú Principal
+                            </Button>
+                        </div>
+
+                        {currentView === 'teams' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <TeamSetup teams={teams} openAccordion={openAccordion} setOpenAccordion={setOpenAccordion} onNavigate={handleReturnToTop} />
+                            </div>
+                        )}
+
+                        {currentView === 'standings' && (
+                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {champion && (
+                                    <div ref={championCardRef}>
+                                        <Card className="bg-card border-primary ring-2 ring-primary shadow-lg animate-in fade-in zoom-in-95">
+                                            <CardHeader className="items-center text-center">
+                                                <TrophyIcon className="w-16 h-16 text-primary" />
+                                                <CardTitle className="text-2xl text-primary">¡Equipo Campeón!</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="text-center">
+                                                <p className="text-3xl font-bold tracking-wider text-foreground">{champion}</p>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                )}
+                                <div ref={standingsRef}>
+                                    <StandingsTable
+                                        teams={teams}
+                                        standings={standings}
+                                        onNavigate={handleReturnToTop}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {currentView === 'leaders' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" ref={statisticsRef}>
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Panel de Líderes</CardTitle>
                                     </CardHeader>
-                                    <CardContent className="text-center">
-                                        <p className="text-3xl font-bold tracking-wider text-foreground">{champion}</p>
+                                    <CardContent>
+                                        <LeaderBoard
+                                            games={[...preliminaryGames, championshipGame]}
+                                            teams={teams}
+                                        />
                                     </CardContent>
+                                    <CardFooter className="flex justify-end w-full">
+                                        <Button size="sm" variant="secondary" onClick={handleReturnToTop}>
+                                            Volver al Inicio
+                                        </Button>
+                                    </CardFooter>
                                 </Card>
                             </div>
                         )}
-                        <div ref={statisticsRef}>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Panel de Líderes</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <LeaderBoard
-                                        games={[...preliminaryGames, championshipGame]}
+
+                        {currentView === 'games' && (
+                            <div className="grid grid-cols-1 lg:grid-cols-1 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div ref={scheduleRef}>
+                                    <ScheduleCard
+                                        title="Ronda Inicial"
+                                        games={preliminaryGames}
                                         teams={teams}
+                                        onGameChange={handleGameChange}
+                                        onInningChange={handleInningChange}
+                                        onSaveBatting={handleSaveBatting}
+                                        onSavePitching={handleSavePitching}
+                                        onSwapTeams={handleSwapTeams}
+                                        onNavigate={handleReturnToTop}
+                                        onNavigateToStandings={() => setCurrentView('standings')}
                                     />
-                                </CardContent>
-                                <CardFooter className="flex justify-end w-full">
-                                    <Button size="sm" variant="secondary" onClick={handleReturnToTop}>
-                                        Ir al inicio
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        </div>
+                                </div>
+                                <ScheduleCard
+                                    title="Partido Final"
+                                    games={[championshipGame]}
+                                    teams={teams}
+                                    onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, true)}
+                                    onInningChange={(gameId, inningIndex, teamIndex, value) => handleInningChange(gameId, inningIndex, teamIndex, value, true)}
+                                    onSaveBatting={handleSaveBatting}
+                                    onSavePitching={handleSavePitching}
+                                    onSwapTeams={handleSwapTeams}
+                                    onNavigate={handleReturnToTop}
+                                    onNavigateToStandings={() => setCurrentView('standings')}
+                                    isChampionship
+                                />
+                            </div>
+                        )}
                     </div>
-                    <div className="xl:col-span-3 space-y-8">
-                        <div ref={scheduleRef}>
-                            <ScheduleCard
-                                title="Ronda Inicial"
-                                games={preliminaryGames}
-                                teams={teams}
-                                onGameChange={handleGameChange}
-                                onInningChange={handleInningChange}
-                                onSaveBatting={handleSaveBatting}
-                                onSavePitching={handleSavePitching}
-                                onNavigate={handleReturnToTop}
-                                onNavigateToStandings={() => handleScrollTo(standingsRef)}
-                            />
-                        </div>
-                        <ScheduleCard
-                            title="Partido Final"
-                            games={[championshipGame]}
-                            teams={teams}
-                            onGameChange={(gameId, field, value) => handleGameChange(gameId, field, value, true)}
-                            onInningChange={(gameId, inningIndex, teamIndex, value) => handleInningChange(gameId, inningIndex, teamIndex, value, true)}
-                            onSaveBatting={handleSaveBatting}
-                            onSavePitching={handleSavePitching}
-                            isChampionship
-                        />
-                    </div>
-                </div>
+                )}
             </main>
-            <footer className="py-6 flex flex-col items-center justify-center gap-4 text-center text-sm text-muted-foreground">
-                <Image src="/images/sponsor-logo.png" alt="Sponsor Logo" width={200} height={100} />
-                <div className="flex flex-col items-center gap-2">
-                    <p>copyright: Cristian Lacout | Hecho por amor al juego</p>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-[10px] text-muted-foreground/30 hover:text-destructive transition-colors"
-                        onClick={handleResetTournament}
-                    >
-                        Reiniciar Resultados del Torneo
-                    </Button>
-                </div>
-            </footer>
+            {currentView === 'menu' && (
+                <footer className="mt-auto py-12 flex flex-col items-center justify-center gap-8 text-center">
+                    <div className="flex flex-col items-center gap-6">
+                        <Image
+                            src="/images/sponsor-logo.png"
+                            alt="Developer Branding"
+                            width={280}
+                            height={70}
+                            className="opacity-80 hover:opacity-100 transition-opacity duration-300"
+                        />
+                        <div className="flex flex-col items-center gap-3">
+                            <p className="text-sky-500/50 uppercase tracking-[0.3em] text-[11px] font-bold">
+                                desarrollado por C|J|L
+                            </p>
+                            <button
+                                onClick={handleResetTournament}
+                                className="text-[10px] text-muted-foreground/40 hover:text-destructive transition-colors underline-offset-4 hover:underline"
+                            >
+                                Reiniciar Resultados del Torneo
+                            </button>
+                        </div>
+                    </div>
+                </footer>
+            )}
         </div>
     );
 }

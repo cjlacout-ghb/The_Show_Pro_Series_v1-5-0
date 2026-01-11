@@ -219,38 +219,52 @@ export async function updatePlayer(playerId: number, data: { number?: number, na
 }
 
 export async function resetTournamentScores() {
-    // 1. Delete all stats
-    await supabase.from('batting_stats').delete().neq('player_id', 0) // delete all
-    await supabase.from('pitching_stats').delete().neq('player_id', 0)
+    try {
+        // 1. Delete all stats (using a filter that definitely hits all rows)
+        const { error: bError } = await supabase.from('batting_stats').delete().neq('game_id', -1);
+        const { error: pError } = await supabase.from('pitching_stats').delete().neq('game_id', -1);
 
-    // 2. Reset games scores and innings for all
-    const { error: error1 } = await supabase
-        .from('games')
-        .update({
-            score1: null,
-            score2: null,
-            hits1: null,
-            hits2: null,
-            errors1: null,
-            errors2: null,
-            innings: []
-        })
-        .neq('id', 0)
+        if (bError || pError) {
+            console.error('Error deleting stats:', bError || pError);
+        }
 
-    // 3. Reset team IDs ONLY for the championship game (so it starts empty)
-    const { error: error2 } = await supabase
-        .from('games')
-        .update({
-            team1_id: null,
-            team2_id: null
-        })
-        .eq('id', 16)
+        // 2. Reset games scores and innings
+        const { error: error1 } = await supabase
+            .from('games')
+            .update({
+                score1: null,
+                score2: null,
+                hits1: null,
+                hits2: null,
+                errors1: null,
+                errors2: null,
+                innings: []
+            })
+            .neq('id', -1);
 
-    const error = error1 || error2;
+        if (error1) {
+            console.error('Error resetting games:', error1);
+        }
 
-    if (error) console.error('Error resetting scores:', error)
-    revalidatePath('/');
-    return { success: true };
+        // 3. Reset team IDs for the championship game (ID 16)
+        const { error: error2 } = await supabase
+            .from('games')
+            .update({
+                team1_id: null,
+                team2_id: null
+            })
+            .eq('id', 16);
+
+        if (error2) {
+            console.error('Error resetting championship game:', error2);
+        }
+
+        revalidatePath('/');
+        return { success: true };
+    } catch (err) {
+        console.error('Unexpected error during reset:', err);
+        return { success: false, error: 'Unexpected error' };
+    }
 }
 
 
